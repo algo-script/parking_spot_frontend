@@ -42,8 +42,8 @@ const SideBar = ({
   };
 
   const mainNavItems = [
-    { name: 'Dashboard', path: '/home-search-screen', icon: 'LayoutDashboard' },
-    { name: 'Find Parking', path: '/home-search-screen', icon: 'Search' },
+    { name: 'Dashboard', path: '/', icon: 'LayoutDashboard' },
+    { name: 'Find Parking', path: '/', icon: 'Search' },
     { name: 'My Parking Spots', path: '/my-parking-spots', icon: 'ParkingCircle' },
     { name: 'Add Parking Spot', path: '/add-parking-spot', icon: 'Plus' },
     { name: 'Bookings', path: '/bookings', icon: 'Calendar' },
@@ -83,9 +83,9 @@ const SideBar = ({
             src={userAvatar}
             alt={userName}
             className="w-8 h-8 rounded-full"
-            onError={(e) => {
-              e.target.src = "/assets/images/no_image.png"
-            }}
+            // onError={(e) => {
+            //   e.target.src = "/assets/images/no_image.png"
+            // }}
           />
           {!isCollapsed && (
             <div className="ml-3">

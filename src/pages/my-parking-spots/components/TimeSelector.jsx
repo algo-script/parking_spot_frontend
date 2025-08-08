@@ -4,6 +4,8 @@ import Icon from "../../../components/AppIcon";
 const TimeSelector = ({ startTime, endTime, onTimeChange }) => {
   const [start, setStart] = useState(startTime || "08:00");
   const [end, setEnd] = useState(endTime || "18:00");
+  console.log("start",start)
+  console.log("end",end)
   
   // Generate time options in 30-minute increments
   const generateTimeOptions = () => {
@@ -36,7 +38,7 @@ const TimeSelector = ({ startTime, endTime, onTimeChange }) => {
     if (start && end && start !== endTime && end !== startTime) {
       onTimeChange(start, end);
     }
-  }, [start, end, startTime, endTime, onTimeChange]);
+  }, [start, end, startTime, endTime]);
   
   // Handle start time change
   const handleStartChange = (e) => {

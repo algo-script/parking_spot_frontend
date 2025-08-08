@@ -13,6 +13,7 @@ export const ContextProvider = ({ children }) => {
     if (newToken) {
       localStorage.setItem('authToken', newToken);
     } else {
+      setToken('')
       localStorage.removeItem('authToken');
     }
   };

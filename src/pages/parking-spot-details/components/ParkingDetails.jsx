@@ -2,6 +2,8 @@ import React from "react";
 import Icon from "../../../components/AppIcon";
 
 const ParkingDetails = ({ features }) => {
+   console.log("features",features)
+
   const featuresList = [
     {
       name: "Type",
@@ -39,7 +41,7 @@ const ParkingDetails = ({ features }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {featuresList.map((feature) => (
         <div key={feature.name} className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center mr-3">
+          <div className="w-10 h-10 rounded-full bg-gray-50 bg-opacity-10 flex items-center justify-center mr-3">
             <Icon name={feature.icon} size={20} className="text-primary" />
           </div>
           <div>

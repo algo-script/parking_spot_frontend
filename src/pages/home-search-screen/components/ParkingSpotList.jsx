@@ -1,28 +1,43 @@
 import React from "react";
 import Icon from "../../../components/AppIcon";
 import Image from "../../../components/AppImage";
+import { formatTimeString } from "utils/helperFunctions";
 
 const ParkingSpotList = ({ 
   spots, 
   isLoading, 
-  selectedSpot, 
-  onSpotSelect, 
+  // selectedSpot, 
+  // onSpotSelect, 
   onSpotClick 
 }) => {
+
+  // console.log("spots",spots ) 
   // Format time string to AM/PM format
-  const formatTime = (timeString) => {
-    if (!timeString) return "";
+  // const formatTime = (timeString) => {
+  //   if (!timeString) return "";
     
-    try {
-      const [hours, minutes] = timeString.split(":");
-      const hour = parseInt(hours, 10);
-      const period = hour >= 12 ? "PM" : "AM";
-      const displayHour = hour % 12 || 12;
-      return `${displayHour}:${minutes} ${period}`;
-    } catch (e) {
-      return timeString;
-    }
-  };
+  //   try {
+  //     const [hours, minutes] = timeString.split(":");
+  //     const hour = parseInt(hours, 10);
+  //     const period = hour >= 12 ? "PM" : "AM";
+  //     const displayHour = hour % 12 || 12;
+  //     return `${displayHour}:${minutes} ${period}`;
+  //   } catch (e) {
+  //     return timeString;
+  //   }
+  // };
+  // const formatDateTime = (isoString) => {
+  //   if (!isoString) return "";
+  //   const date = new Date(isoString);
+  //   return date.toLocaleString("en-IN", {
+  //     day: "2-digit",
+  //     month: "short",
+  //     year: "numeric",
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //     hour12: true,
+  //   });
+  // };
 
   // Render loading skeletons
   if (isLoading) {
@@ -90,32 +105,30 @@ const ParkingSpotList = ({
       
       <div className="overflow-y-auto h-[calc(500px-60px)]">
         {spots.map((spot) => {
-          const isSelected = selectedSpot && selectedSpot.id === spot.id;
+          // const isSelected = selectedSpot && selectedSpot.id === spot.id;
           
           return (
             <div 
-              key={spot.id}
-              className={`p-4 border-b border-gray-200 cursor-pointer transition-colors duration-200 ${
-                isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
-              }`}
+              key={spot._id}
+              className={`p-4 border-b border-gray-200 cursor-pointer transition-colors duration-200  hover:bg-gray-50`}
               onClick={() => {
-                onSpotSelect(spot);
-                onSpotClick(spot.id);
+                // onSpotSelect(spot);
+                onSpotClick(spot._id);
               }}
               tabIndex={0}
               role="button"
-              aria-pressed={isSelected}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  onSpotSelect(spot);
-                  onSpotClick(spot.id);
-                }
-              }}
+              // aria-pressed={isSelected}
+              // onKeyDown={(e) => {
+              //   if (e.key === 'Enter' || e.key === ' ') {
+              //     onSpotSelect(spot);
+              //     onSpotClick(spot.id);
+              //   }
+              // }}
             >
               <div className="flex">
                 <div className="w-20 h-20 bg-gray-200 rounded-md mr-3 overflow-hidden">
                   <Image 
-                    src={spot.imageUrl} 
+                    images = {spot.images} 
                     alt={spot.name}
                     className="w-full h-full object-cover"
                   />
@@ -138,7 +151,7 @@ const ParkingSpotList = ({
                   
                   <p className="text-sm text-gray-600 mt-1">
                     <Icon name="Clock" size={14} className="inline mr-1 text-gray-400" />
-                    {formatTime(spot.availableFrom)} - {formatTime(spot.availableTo)}
+                    {formatTimeString(spot.timeAvailability.start)} - {formatTimeString(spot.timeAvailability.end)}
                   </p>
                   
                   <div className="flex items-center justify-between mt-2">
@@ -154,7 +167,7 @@ const ParkingSpotList = ({
                   </div>
                 </div>
               </div>
-              
+{/*               
               {isSelected && (
                 <div className="mt-3 pt-3 border-t border-gray-200">
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -179,7 +192,7 @@ const ParkingSpotList = ({
                     <Icon name="ArrowRight" size={16} className="ml-1" />
                   </button>
                 </div>
-              )}
+              )} */}
             </div>
           );
         })}

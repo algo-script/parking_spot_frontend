@@ -4,14 +4,25 @@ import Icon from "../../../components/AppIcon";
 const OwnerInfo = ({ owner }) => {
   return (
     <div className="flex items-start">
-      <img
-        src={owner.avatar}
+      {owner.avatar ? (
+        <img
+          src={`${import.meta.env.VITE_APP_BASE_URL}/${owner.avatar}`}
+          alt={owner.name}
+          className="w-12 h-12 rounded-full mr-4"
+        />
+      ) : (
+        <div className="w-12 h-12 rounded-full mr-4 bg-gray-200 flex items-center justify-center">
+          <Icon name="User" size={24} className="text-gray-500" />
+        </div>
+      )}
+      {/* <img
+        src={`${import.meta.env.VITE_APP_BASE_URL}/${owner.avatar}`}
         alt={owner.name}
         className="w-12 h-12 rounded-full mr-4"
-        onError={(e) => {
-          e.target.src = "/assets/images/no_image.png";
-        }}
-      />
+        // onError={(e) => {
+        //   e.target.src = "/assets/images/no_image.png";
+        // }}
+      /> */}
       <div>
         <h3 className="font-medium text-gray-900">Hosted by {owner.name}</h3>
         <div className="flex items-center mt-1">

@@ -1,23 +1,18 @@
 import React, { useRef, useEffect, useState } from "react";
 import { OlaMaps } from "olamaps-web-sdk";
 
-const MapSelector = ({ latitude, longitude, onPositionChange }) => {
+const Locationmap = ({ latitude, longitude ,name}) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const olaMapsRef = useRef(null);
   const markerRef = useRef(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
-  // const [initialCoords, setInitialCoords] = useState({ lat: latitude, lng: longitude });
+  const [initialCoords, setInitialCoords] = useState({ lat: latitude, lng: longitude });
 
   const API_KEY = "Qb1tCYd0ghxhAyc3s1pB4AouMSrYYR8bf5X34TPE"; // Your OlaMaps API key
-  // console.log("initialCoords",initialCoords)
-  console.log("latitude",latitude);
-  console.log("longitude",longitude);
-  
 
   // Initialize map and fixed marker
   useEffect(() => {
-    
     const initializeMap = async () => {
       try {
         const olaMaps = new OlaMaps({ apiKey: API_KEY });
@@ -26,7 +21,7 @@ const MapSelector = ({ latitude, longitude, onPositionChange }) => {
         const map = olaMaps.init({
           container: mapContainerRef.current,
           style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
-          center: [longitude, latitude],
+          center: [initialCoords.lng, initialCoords.lat],
           zoom: 16,
         });
 
@@ -38,17 +33,12 @@ const MapSelector = ({ latitude, longitude, onPositionChange }) => {
             offset: [0, 0],
             anchor: "bottom",
             color: "blue",
-            draggable: true, // Marker stays fixed at center
+            draggable: false, // Marker stays fixed at center
+            // title: name
           })
-          .setLngLat([longitude, latitude])
+          .setLngLat([initialCoords.lng, initialCoords.lat])
           .addTo(map);
         markerRef.current = marker;
-
-        // Handle marker drag end to update coordinates and address
-        marker.on("dragend", async () => {
-          const { lng, lat } = marker.getLngLat();
-          onPositionChange(lat, lng);        
-        });
 
         setIsMapInitialized(true);
       } catch (error) {
@@ -56,7 +46,7 @@ const MapSelector = ({ latitude, longitude, onPositionChange }) => {
       }
     };
 
-    if (!isMapInitialized && longitude && latitude) {
+    if (!isMapInitialized && initialCoords.lat && initialCoords.lng) {
       initializeMap();
     }
 
@@ -69,7 +59,7 @@ const MapSelector = ({ latitude, longitude, onPositionChange }) => {
         mapInstanceRef.current.remove();
       }
     };
-  }, []); // Depend only on initialCoords to avoid reinitialization
+  }, [initialCoords]); // Depend only on initialCoords to avoid reinitialization
 
   // Sync map center and marker with prop changes
   useEffect(() => {
@@ -82,9 +72,9 @@ const MapSelector = ({ latitude, longitude, onPositionChange }) => {
   return (
     <div
       ref={mapContainerRef}
-      className="w-full h-full rounded-lg overflow-hidden border border-gray-300"
+      className="w-full h-64 rounded-lg overflow-hidden border border-gray-200"
     />
   );
 };
 
-export default MapSelector;
+export default Locationmap;

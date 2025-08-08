@@ -67,7 +67,7 @@ const AuthModal = ({ isOpen, onClose, initialTab }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Background overlay */}
       <div 
-        className="absolute inset-0 bg-gray-500 opacity-75" 
+        className="absolute inset-0 opacity-75" 
         onClick={onClose}
       ></div>
 
@@ -145,7 +145,7 @@ const AuthModal = ({ isOpen, onClose, initialTab }) => {
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    minLength={6}
+                    // minLength={6}
                     className="w-full"
                   />
                 </div>
@@ -255,7 +255,7 @@ const AuthModal = ({ isOpen, onClose, initialTab }) => {
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    minLength={6}
+                    // minLength={6}
                     className="w-full"
                   />
                 </div>
@@ -272,7 +272,7 @@ const AuthModal = ({ isOpen, onClose, initialTab }) => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
-                    minLength={6}
+                    // minLength={6}
                     className="w-full"
                   />
                 </div>

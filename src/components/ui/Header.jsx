@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 import Input from './Input';
 import AuthModal from 'pages/AuthModal';
+import { Mycontext } from '../../context/context';
 
 
 const Header = ({
   variant = 'default',
   userLoggedIn = false,
-  userName = 'John Doe',
-  userAvatar = '/assets/images/avatar.png',
+  userName = 'User',
+  userAvatar ,
   onSearch,
   className = '',
 }) => {
+  const { token,setToken } = useContext(Mycontext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,6 +23,60 @@ const Header = ({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('signin');
   const location = useLocation();
+  const navigate = useNavigate();
+  const mobileMenuRef = useRef(null);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+      if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen, isUserMenuOpen]);
+  
+  // Fallback avatar component
+  const renderAvatar = (size = 8) => {
+    if (userAvatar) {
+      return (
+        <img
+          src={`${import.meta.env.VITE_APP_BASE_URL}/${userAvatar}`}
+          alt={userName}
+          className={`w-${size} h-${size} rounded-full`}
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'block';
+          }}
+        />
+      );
+    }
+    return (
+      <div 
+        className={`w-${size} h-${size} rounded-full bg-gray-200 flex items-center justify-center`}
+        style={{ display: userAvatar ? 'none' : 'flex' }}
+      >
+        <Icon name="User" size={size === 8 ? 16 : 20} className="text-gray-500" />
+      </div>
+    );
+  };
+
+  
+
+  const handleLogout = () => {
+    setToken(null);
+  };
+
+  const navigateToProfile = () =>{  
+    navigate("/user-profile/profile")
+  }
 
   useEffect(() => {
     const handleResize = () => {
@@ -50,14 +106,14 @@ const Header = ({
     if (isMenuOpen) setIsMenuOpen(false);
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (onSearch) onSearch(searchQuery);
-  };
+  // const handleSearchSubmit = (e) => {
+  //   e.preventDefault();
+  //   if (onSearch) onSearch(searchQuery);
+  // };
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+  // const handleSearchChange = (e) => {
+  //   setSearchQuery(e.target.value);
+  // };
 
   const openSignInModal = () => {
     setAuthModalTab('signin');
@@ -75,18 +131,30 @@ const Header = ({
   const baseClasses = `w-full z-50 ${isCompact ? 'py-2' : 'py-4'}`;
   const variantClasses = isTransparent
     ? 'bg-transparent text-white' : 'bg-white shadow-md text-gray-900';
+  // Base nav items that are always visible
+  const baseNavItems = [
+    { name: 'Find Parking', path: '/', icon: 'Search' }
+  ];
 
-  const navItems = [
-    { name: 'Find Parking', path: '/home-search-screen', icon: 'Search' },
+  // Nav items that require authentication
+  const authNavItems = [
     { name: 'My Spots', path: '/my-parking-spots', icon: 'ParkingCircle' },
     { name: 'Add Spot', path: '/add-parking-spot', icon: 'Plus' },
   ];
 
+  // Combine nav items based on authentication status
+  const navItems = token ? [...baseNavItems, ...authNavItems] : baseNavItems;
+  // const navItems = [
+  //   { name: 'Find Parking', path: '/', icon: 'Search' },
+  //   { name: 'My Spots', path: '/my-parking-spots', icon: 'ParkingCircle' },
+  //   { name: 'Add Spot', path: '/add-parking-spot', icon: 'Plus' },
+  // ];
+
   const userMenuItems = [
-    { name: 'Profile', icon: 'User', action: () => { } },
+    { name: 'Profile', icon: 'User', action:navigateToProfile },
     { name: 'My Bookings', icon: 'Calendar', action: () => { } },
-    { name: 'Settings', icon: 'Settings', action: () => { } },
-    { name: 'Logout', icon: 'LogOut', action: () => { } },
+    { name: 'Settings', icon: 'Settings', action: () => { }},
+    { name: 'Logout', icon: 'LogOut', action: handleLogout },
   ];
 
   const renderLogo = () => (
@@ -97,18 +165,18 @@ const Header = ({
     </Link>
   );
 
-  const renderSearch = () => (
-    <form onSubmit={handleSearchSubmit} className={`${isCompact ? 'max-w-md' : 'max-w-xl'} w-full mx-auto`}>
-      <Input
-        type="search"
-        placeholder="Find parking near you..."
-        value={searchQuery}
-        onChange={handleSearchChange}
-        icon="MapPin"
-        className={`${isTransparent ? 'bg-white bg-opacity-20 backdrop-blur-md border-white border-opacity-30 text-white placeholder-white placeholder-opacity-80' : ''}`}
-      />
-    </form>
-  );
+  // const renderSearch = () => (
+  //   <form onSubmit={handleSearchSubmit} className={`${isCompact ? 'max-w-md' : 'max-w-xl'} w-full mx-auto`}>
+  //     <Input
+  //       type="search"
+  //       placeholder="Find parking near you..."
+  //       value={searchQuery}
+  //       onChange={handleSearchChange}
+  //       icon="MapPin"
+  //       className={`${isTransparent ? 'bg-white bg-opacity-20 backdrop-blur-md border-white border-opacity-30 text-white placeholder-white placeholder-opacity-80' : ''}`}
+  //     />
+  //   </form>
+  // );
 
   const renderDesktopNav = () => (
     <div className="hidden md:flex items-center space-x-6">
@@ -128,21 +196,22 @@ const Header = ({
   );
 
   const renderMobileMenu = () => (
-    <div className={`
+    <div 
+    className={`
       fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out
       ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       md:hidden
     `}>
-      <div className="bg-white h-full w-4/5 max-w-sm shadow-xl flex flex-col">
+      <div className="bg-white h-full w-4/5 max-w-sm shadow-xl flex flex-col"  ref={mobileMenuRef}>
         <div className="flex items-center justify-between p-4 border-b">
           {renderLogo()}
           <button onClick={toggleMenu} className="text-gray-500 hover:text-gray-700">
             <Icon name="X" size={24} />
           </button>
         </div>
-        <div className="p-4">
-          {renderSearch()}
-        </div>
+        {/* <div className="p-4"> */}
+          {/* {renderSearch()} */}
+        {/* </div> */}
         <nav className="flex-1 px-4 pb-4">
           <ul className="space-y-4">
             {navItems.map((item) => (
@@ -163,17 +232,18 @@ const Header = ({
         {userLoggedIn && (
           <div className="p-4 border-t">
             <div className="flex items-center">
-              <img
+            {renderAvatar(10)}
+              {/* <img
                 src={userAvatar}
                 alt={userName}
                 className="w-10 h-10 rounded-full mr-3"
-                onError={(e) => {
-                  e.target.src = "/assets/images/no_image.png"
-                }}
-              />
+                // onError={(e) => {
+                //   e.target.src = "/assets/images/no_image.png"
+                // }}
+              /> */}
               <div>
                 <p className="font-medium text-gray-900">{userName}</p>
-                <p className="text-sm text-gray-500">View profile</p>
+                <p className="text-sm text-gray-800">View profile</p>
               </div>
             </div>
             <div className="mt-4">
@@ -181,6 +251,7 @@ const Header = ({
                 variant="outline"
                 icon="LogOut"
                 fullWidth
+                onClick={handleLogout}
               >
                 Sign Out
               </Button>
@@ -196,21 +267,22 @@ const Header = ({
   );
 
   const renderUserMenu = () => (
-    <div className="relative">
+    <div className="relative" ref={userMenuRef}>
       <button
         onClick={toggleUserMenu}
         className="flex items-center focus:outline-none"
         aria-expanded={isUserMenuOpen}
         aria-haspopup="true"
       >
-        <img
+        {renderAvatar()}
+        {/* <img
           src={userAvatar}
           alt={userName}
           className="w-8 h-8 rounded-full"
-          onError={(e) => {
-            e.target.src = "/assets/images/no_image.png"
-          }}
-        />
+          // onError={(e) => {
+          //   e.target.src = "/assets/images/no_image.png"
+          // }}
+        /> */}
         <span className={`ml-2 ${isTransparent ? 'text-white' : 'text-gray-700'} hidden sm:block`}>
           {userName}
         </span>
@@ -254,11 +326,11 @@ const Header = ({
               {renderLogo()}
             </div>
 
-            {!isCompact && !isMobile && (
+            {/* {!isCompact && !isMobile && (
               <div className="hidden md:block mx-4 flex-1">
                 {renderSearch()}
               </div>
-            )}
+            )} */}
 
             <div className="flex items-center space-x-4">
               {!isMobile && renderDesktopNav()}
@@ -287,11 +359,11 @@ const Header = ({
             </div>
           </div>
 
-          {isCompact && (
+          {/* {isCompact && (
             <div className="mt-2">
               {renderSearch()}
             </div>
-          )}
+          )} */}
         </div>
 
         {renderMobileMenu()}
