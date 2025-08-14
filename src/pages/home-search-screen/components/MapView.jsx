@@ -82,7 +82,6 @@ const MapView = ({
         });
 
         mapInstanceRef.current = map;
-
         // Add user location marker (non-draggable)
         if (userLocation) {
           const userMarker = olaMaps

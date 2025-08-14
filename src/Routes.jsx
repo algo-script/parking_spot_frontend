@@ -18,7 +18,7 @@ import AuthModal from "pages/AuthModal";
 
 
 const Routes = () => {
-  const { token } = useContext(Mycontext);
+  const { token ,authModalOpen,setAuthModalOpen,authModalTab} = useContext(Mycontext);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -53,24 +53,6 @@ const Routes = () => {
     );
   }
   // If no token, show only the AuthModal as the login screen
-  if (!token) {
-    return (
-      <BrowserRouter>
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-        <AuthModal isOpen={true} onClose={() => {}} initialTab="signin" />
-      </BrowserRouter>
-    );
-  }
 
   return (
     <BrowserRouter>
@@ -92,6 +74,11 @@ const Routes = () => {
         userName={user?.name}
         userAvatar={user?.profileImage}
       />
+       {authModalOpen && <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialTab={authModalTab}
+      />}
        <RouterRoutes>
       <Route path="/" element={<HomeSearchScreen />} />
       <Route
@@ -102,26 +89,34 @@ const Routes = () => {
       <Route
         path="/my-parking-spots"
         element={
-          // <ProtectedRoute>
+          <ProtectedRoute>
             <MyParkingSpots />
-          // </ProtectedRoute>
+         </ProtectedRoute>
+        }
+      />
+       <Route
+        path="/my-booking"
+        element={
+          <ProtectedRoute>
+            <MyParkingSpots />
+         </ProtectedRoute>
         }
       />
       <Route
         path="/add-parking-spot"
         element={
-          // <ProtectedRoute>
+          <ProtectedRoute>
             <AddParkingSpot />
-          // </ProtectedRoute>
+         </ProtectedRoute>
         }
       />
 
       <Route
         path="/user-profile/*"
         element={
-          // <ProtectedRoute>
+          <ProtectedRoute>
             <UserProfile user={user} fetchUserData={fetchUserData} />
-          // </ProtectedRoute>
+          </ProtectedRoute>
         }
       />
 

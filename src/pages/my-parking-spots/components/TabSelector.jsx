@@ -32,7 +32,9 @@ const TabSelector = ({ activeTab, onTabChange }) => {
             size={16}
             className="mr-2"
           />
-          {tab.label}
+          <span className="hidden sm:block">
+            {tab.label}
+          </span>
         </button>
       ))}
     </div>

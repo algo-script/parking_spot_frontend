@@ -88,6 +88,20 @@ export const setDefaultVehicle = async (vehicleId) => {
   return response.data;
 };
 
+export const callconfirmBooking = async(bookingdata)=>{
+  const response = await axiosInstance.post(`/user/confirmbooking`,bookingdata);
+  return response.data;
+}
+
+export const getuserBooking = async () => {
+  const response = await axiosInstance.get(`/user/getuserBooking`);
+  return response.data;
+};
+
+export const cancelBooking = async (bookingId) => {
+  const response = await axiosInstance.post(`/user/cancelBooking`,{bookingId});
+  return response.data;
+};
 
 export const formatTimeString = (timeStr) => {
   if (!timeStr) return "";

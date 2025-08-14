@@ -660,15 +660,13 @@ const AddParkingSpot = () => {
   const [formErrors, setFormErrors] = useState({});
   const { token } = useContext(Mycontext);
 
-  const OLA_MAPS_API_KEY = "Qb1tCYd0ghxhAyc3s1pB4AouMSrYYR8bf5X34TPE"; // Your OlaMaps API key
+  const OLA_MAPS_API_KEY = "Qb1tCYd0ghxhAyc3s1pB4AouMSrYYR8bf5X34TPE"; 
   console.log(formData);
   
 
   // Fetch user's current location on component mount
   useEffect(() => {
      if(!location.state?.isEdit){
-
-     
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -707,8 +705,8 @@ const AddParkingSpot = () => {
       name: spotDetails.name || "",
       address: spotDetails.address || "",
       addressSuggestions: [],
-      latitude: spotDetails.location?.coordinates[1] || 12.9716, // latitude is second in coordinates array
-      longitude: spotDetails.location?.coordinates[0] || 77.5946, // longitude is first
+      latitude: spotDetails.location?.coordinates[1] || 12.9716, 
+      longitude: spotDetails.location?.coordinates[0] || 77.5946, 
       timeAvailability: spotDetails.timeAvailability || {
         morning: false,
         afternoon: false,
@@ -719,7 +717,7 @@ const AddParkingSpot = () => {
       size: spotDetails.size || null,
       hourlyRate: spotDetails.hourlyRate?.toString() || "",
       description: spotDetails.description || "",
-      images: spotDetails.images, // We'll handle existing images separately
+      images: spotDetails.images, 
       availableDays: spotDetails.availableDays || {
         monday: false,
         tuesday: false,
@@ -1325,7 +1323,7 @@ const AddParkingSpot = () => {
                               ) : (
                                 // Existing image from database (URL/path string)
                                 <img
-                                  src={`http://localhost:5510/${image}`} // Adjust based on your data structure
+                                  src={`${import.meta.env.VITE_APP_BASE_URL}/${image}`} 
                                   alt={`Preview ${index + 1}`}
                                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />

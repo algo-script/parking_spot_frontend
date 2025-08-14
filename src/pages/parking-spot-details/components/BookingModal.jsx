@@ -1,318 +1,435 @@
 import React, { useState, useEffect } from "react";
+import moment from "moment";
 import Icon from "../../../components/AppIcon";
+import { callconfirmBooking, getVehicle } from "utils/helperFunctions";
 import { useNavigate } from "react-router-dom";
 
 const BookingModal = ({ parkingSpot, onClose }) => {
-  const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [bookingDetails, setBookingDetails] = useState({
-    dateRange: {
-      start: new Date(),
-      end: new Date(Date.now() + 60 * 60 * 1000) // Default 1 hour
-    },
-    vehicle: null,
-    paymentMethod: "wallet",
-    promoCode: "",
-    confirmed: false
-  });
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedStartTime, setSelectedStartTime] = useState("");
+  const [selectedEndTime, setSelectedEndTime] = useState("");
   const [availableVehicles, setAvailableVehicles] = useState([]);
-  const [realTimeAvailability, setRealTimeAvailability] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [error, setError] = useState(null);
+  const [sucessmsg,setSucessmsg] = useState("")
+  const [qrurl, setQrurl] = useState(null);
+  const navigate = useNavigate();
 
-  // Fetch user's vehicles from profile
-  useEffect(() => {
-    // Mock API call
-    const fetchVehicles = async () => {
-      setLoading(true);
-      try {
-        // Replace with actual API call
-        const mockVehicles = [
-          { id: "v1", plate: "ABC123", make: "Toyota", model: "Camry", color: "Blue", isDefault: true },
-          { id: "v2", plate: "XYZ789", make: "Honda", model: "Civic", color: "Red", isDefault: false }
-        ];
-        setAvailableVehicles(mockVehicles);
-        setBookingDetails(prev => ({
-          ...prev,
-          vehicle: mockVehicles.find(v => v.isDefault) || mockVehicles[0]
-        }));
-      } catch (error) {
-        console.error("Error fetching vehicles:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchVehicles();
-  }, []);
+  // Get available days with dates and time slots
+  const getAvailableDaysWithDates = () => {
+    const today = moment();
+    const currentDay = today.day();
+    const currentTime = today.format("HH:mm");
 
-  const handleDateChange = (type, value) => {
-    setBookingDetails(prev => ({
-      ...prev,
-      dateRange: {
-        ...prev.dateRange,
-        [type]: new Date(value)
-      }
-    }));
+    const dayMap = [
+      { id: "sunday", name: "Sunday", dayIndex: 0 },
+      { id: "monday", name: "Monday", dayIndex: 1 },
+      { id: "tuesday", name: "Tuesday", dayIndex: 2 },
+      { id: "wednesday", name: "Wednesday", dayIndex: 3 },
+      { id: "thursday", name: "Thursday", dayIndex: 4 },
+      { id: "friday", name: "Friday", dayIndex: 5 },
+      { id: "saturday", name: "Saturday", dayIndex: 6 },
+    ];
+
+    return dayMap
+      .filter((day) => parkingSpot.availability.availableDays[day.id])
+      .map((day) => {
+        let daysToAdd = (day.dayIndex - currentDay + 7) % 7;
+        const isToday = daysToAdd === 0;
+        
+        const date = today.clone().add(daysToAdd, 'days');
+        
+        let availableSlots = [];
+        if (isToday) {
+          const startTime = moment(parkingSpot.availability.startTime, "HH:mm");
+          const endTime = moment(parkingSpot.availability.endTime, "HH:mm");
+          
+          if (moment(currentTime, "HH:mm").isSameOrAfter(startTime)) {
+            // Start from current time rounded to next 30-minute interval
+            let slotTime = moment(currentTime, "HH:mm");
+            
+            // Round up to next 30 minutes
+            const minutes = slotTime.minutes();
+            if (minutes > 0 && minutes < 30) {
+              slotTime.add(30 - minutes, 'minutes');
+            } else if (minutes > 30) {
+              slotTime.add(60 - minutes, 'minutes');
+            }
+            
+            while (slotTime.isSameOrBefore(endTime)) {
+              availableSlots.push(slotTime.format("HH:mm"));
+              slotTime.add(30, 'minutes');
+            }
+          }
+        }
+        
+        return {
+          ...day,
+          date,
+          dateString: date.format("ddd, MMM D"),
+          isToday,
+          availableSlots
+        };
+      })
+      .sort((a, b) => a.date - b.date);
   };
 
-  const handleVehicleChange = (vehicle) => {
-    setBookingDetails(prev => ({ ...prev, vehicle }));
+  const generateTimeSlots = () => {
+    if (!selectedDay) return [];
+    
+    if (selectedDay.isToday && selectedDay.availableSlots?.length > 0) {
+      return selectedDay.availableSlots;
+    }
+
+    const startTime = moment(parkingSpot.availability.startTime, "HH:mm");
+    const endTime = moment(parkingSpot.availability.endTime, "HH:mm");
+
+    const slots = [];
+    let currentTime = startTime.clone();
+
+    while (currentTime.isSameOrBefore(endTime)) {
+      slots.push(currentTime.format("HH:mm"));
+      currentTime.add(30, 'minutes');
+    }
+
+    return slots;
   };
 
-  const handlePaymentMethodChange = (method) => {
-    setBookingDetails(prev => ({ ...prev, paymentMethod: method }));
-  };
-
-  const handlePromoCodeChange = (e) => {
-    setBookingDetails(prev => ({ ...prev, promoCode: e.target.value }));
-  };
-
-  const checkAvailability = async () => {
+  const fetchVehicles = async () => {
     setLoading(true);
     try {
-      // Mock availability check
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setRealTimeAvailability(true);
-      setStep(2);
+      const response = await getVehicle();
+      if (response.success) {
+        setAvailableVehicles(response.data);
+        const defaultVehicle = response.data.find(v => v.defaultVehicle) || response.data[0];
+        setSelectedVehicle(defaultVehicle);
+      }
     } catch (error) {
-      console.error("Availability check failed:", error);
+      setError("Failed to load vehicles. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDay) {
+      const slots = generateTimeSlots();
+      if (slots.length > 0) {
+        setSelectedStartTime(slots[0]);
+        const endIndex = Math.min(1, slots.length - 1); // Default 30 minutes
+        setSelectedEndTime(slots[endIndex]);
+      } else {
+        setError("No available time slots for selected day");
+      }
+    }
+  }, [selectedDay]);
+
+  const handleDaySelection = (day) => {
+    setError(null);
+    setSelectedDay(day);
+  };
+
+  const handleTimeChange = (type, value) => {
+    setError(null);
+    if (type === "start") {
+      setSelectedStartTime(value);
+      const slots = generateTimeSlots();
+      const newStartIndex = slots.indexOf(value);
+      const newEndIndex = Math.min(newStartIndex + 1, slots.length - 1);
+      setSelectedEndTime(slots[newEndIndex]);
+    } else {
+      setSelectedEndTime(value);
+    }
+  };
+
+  const calculateDuration = () => {
+    if (!selectedStartTime || !selectedEndTime) return "00:00";
+  
+    const start = moment(selectedStartTime, "HH:mm");
+    const end = moment(selectedEndTime, "HH:mm");
+    
+    const duration = moment.duration(end.diff(start));
+    const hours = duration.hours().toString().padStart(2, '0');
+    const minutes = duration.minutes().toString().padStart(2, '0');
+  
+    return `${hours}:${minutes}`;
+  };
+
+  const calculateTotal = () => {
+    if (!selectedStartTime || !selectedEndTime) return parkingSpot.hourlyRate.toFixed(2);
+
+    const start = moment(selectedStartTime, "HH:mm");
+    const end = moment(selectedEndTime, "HH:mm");
+    
+    const duration = moment.duration(end.diff(start));
+    const totalHours = duration.asHours();
+
+    return (totalHours * parkingSpot.hourlyRate).toFixed(2);
   };
 
   const confirmBooking = async () => {
     setLoading(true);
     try {
-      // Mock booking confirmation
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setBookingDetails(prev => ({ ...prev, confirmed: true }));
-      setStep(3);
-      
-      // In real app, would navigate to booking confirmation page
-      // navigate(`/bookings/confirmation/${bookingId}`);
+      // Prepare the data to be sent to the backend
+      const bookingData = {
+        parkingSpotId: parkingSpot._id,
+        vehicleId: selectedVehicle._id,
+        date: selectedDay.date.format("YYYY-MM-DD"),
+        startTime: selectedStartTime,
+        endTime: selectedEndTime,
+        duration: calculateDuration(),
+        totalAmount: calculateTotal()
+      };
+   
+      const response = await callconfirmBooking(bookingData)
+      if(response.success){
+        setSucessmsg(response.message)
+        setQrurl(response.qrCodeUrl)
+        setStep(3);
+      }
+  
+    
     } catch (error) {
-      console.error("Booking failed:", error);
+      setError(error.message || "Booking failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (date) => {
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const calculateDuration = () => {
-    const diff = bookingDetails.dateRange.end - bookingDetails.dateRange.start;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes > 0 ? `${minutes}m` : ''}`;
-  };
-
-  const calculateTotal = () => {
-    const hours = (bookingDetails.dateRange.end - bookingDetails.dateRange.start) / (1000 * 60 * 60);
-    return (hours * parkingSpot.hourlyRate).toFixed(2);
-  };
+  const renderStepIndicator = () => (
+    <div className="flex justify-center mb-6">
+      {[1, 2, 3].map((stepNum) => (
+        <div key={stepNum} className="flex items-center">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center 
+            ${step === stepNum ? 'bg-primary text-white' : 
+             step > stepNum ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+            {stepNum}
+          </div>
+          {stepNum < 3 && (
+            <div className={`w-8 h-1 mx-1 ${step > stepNum ? 'bg-green-100' : 'bg-gray-200'}`}></div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          {/* Header with step indicator */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-4">
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
               <Icon name="X" size={24} />
             </button>
-            <div className="flex items-center space-x-2">
-              {[1, 2, 3].map((stepNum) => (
-                <div
-                  key={stepNum}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center 
-                    ${step === stepNum ? 'bg-primary text-white' : 
-                     step > stepNum ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}
-                >
-                  {stepNum}
-                </div>
-              ))}
-            </div>
+            <h2 className="text-xl font-semibold">Book Parking Spot</h2>
+            <div className="w-6"></div>
           </div>
+
+          {renderStepIndicator()}
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
+              {error}
+            </div>
+          )}
 
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Select Date & Time</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-                  <input
-                    type="datetime-local"
-                    value={bookingDetails.dateRange.start.toISOString().slice(0, 16)}
-                    onChange={(e) => handleDateChange('start', e.target.value)}
-                    min={new Date().toISOString().slice(0, 16)}
-                    className="w-full p-3 border border-gray-300 rounded-md"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-                  <input
-                    type="datetime-local"
-                    value={bookingDetails.dateRange.end.toISOString().slice(0, 16)}
-                    onChange={(e) => handleDateChange('end', e.target.value)}
-                    min={new Date(bookingDetails.dateRange.start.getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)}
-                    className="w-full p-3 border border-gray-300 rounded-md"
-                  />
+              <div>
+                <h3 className="text-lg font-medium mb-2">Select Date</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {getAvailableDaysWithDates().map((day) => (
+                    <button
+                      key={day.dateString}
+                      onClick={() => handleDaySelection(day)}
+                      className={`p-3 border rounded-md text-center transition-colors
+                        ${selectedDay?.dateString === day.dateString
+                          ? "border-primary bg-primary-50"
+                          : "border-gray-200 hover:border-gray-300"}`}
+                    >
+                      <div className="font-medium">{day.name}</div>
+                      <div className="text-sm text-gray-600">{day.dateString}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {parkingSpot.availability.startTime} - {parkingSpot.availability.endTime}
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {selectedDay && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Select Time</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">From</label>
+                      <select
+                        value={selectedStartTime}
+                        onChange={(e) => handleTimeChange("start", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-md"
+                      >
+                        {generateTimeSlots().map((time, index) => (
+                          <option 
+                            key={`start-${index}`} 
+                            value={time}
+                            disabled={time >= selectedEndTime}
+                          >
+                            {time}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">To</label>
+                      <select
+                        value={selectedEndTime}
+                        onChange={(e) => handleTimeChange("end", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-md"
+                      >
+                        {generateTimeSlots().map((time, index) => (
+                          <option
+                            key={`end-${index}`}
+                            value={time}
+                            disabled={time <= selectedStartTime}
+                          >
+                            {time}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Your Vehicle</h3>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-lg font-medium">Your Vehicle</h3>
+                  <button className="text-primary text-sm flex items-center">
+                    <Icon name="Plus" size={16} className="mr-1" />
+                    Add Vehicle
+                  </button>
+                </div>
                 <div className="space-y-3">
-                  {availableVehicles.map(vehicle => (
-                    <div 
-                      key={vehicle.id}
-                      onClick={() => handleVehicleChange(vehicle)}
+                  {availableVehicles.map((vehicle) => (
+                    <div
+                      key={vehicle._id}
+                      onClick={() => setSelectedVehicle(vehicle)}
                       className={`p-3 border rounded-md cursor-pointer transition-colors
-                        ${bookingDetails.vehicle?.id === vehicle.id ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
+                        ${selectedVehicle?._id === vehicle._id
+                          ? "border-primary bg-primary-50"
+                          : "border-gray-200 hover:border-gray-300"}`}
                     >
-                      <div className="flex justify-between">
-                        <span className="font-medium">{vehicle.make} {vehicle.model}</span>
-                        {vehicle.isDefault && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Default</span>}
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">
+                            {vehicle.brand} {vehicle.model}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {vehicle.vehicleNumber}
+                          </div>
+                        </div>
+                        {vehicle.defaultVehicle && (
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                            Default
+                          </span>
+                        )}
                       </div>
-                      <div className="text-sm text-gray-600">{vehicle.plate} • {vehicle.color}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {vehicle.color} • {vehicle.type} {vehicle.isElectric && "• Electric"}
+                      </div>
                     </div>
                   ))}
-                  <button className="text-primary flex items-center text-sm mt-2">
-                    <Icon name="Plus" size={16} className="mr-1" />
-                    Add another vehicle
-                  </button>
                 </div>
               </div>
 
+              {selectedDay && ( <div className="bg-gray-50 p-4 rounded-md">
+                <div className="flex justify-between text-lg font-semibold">
+                  <span>Total:</span>
+                  <span>₹{calculateTotal()}</span>
+                </div>
+                <div className="text-sm text-gray-600 mt-1">
+                  {calculateDuration()} @ ₹{parkingSpot.hourlyRate}/hour
+                </div>
+              </div>)}
+
               <button
-                onClick={checkAvailability}
-                disabled={loading}
-                className="w-full py-3 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors flex items-center justify-center"
+                onClick={() => setStep(2)}
+                disabled={!selectedDay || !selectedVehicle}
+                className="w-full py-3 bg-primary text-white rounded-md hover:bg-primary-dark disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {loading ? 'Checking availability...' : 'Continue to Payment'}
+                Continue
               </button>
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Payment</h2>
+              <h2 className="text-xl font-semibold">Confirm Your Booking</h2>
               
               <div className="bg-gray-50 p-4 rounded-md">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Selected time:</span>
-                  <span className="font-medium">
-                    {formatDate(bookingDetails.dateRange.start)} - {formatDate(bookingDetails.dateRange.end)}
-                  </span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Duration:</span>
-                  <span className="font-medium">{calculateDuration()}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Vehicle:</span>
-                  <span className="font-medium">
-                    {bookingDetails.vehicle?.make} {bookingDetails.vehicle?.model} ({bookingDetails.vehicle?.plate})
-                  </span>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Date:</span>
+                    <span className="font-medium">{selectedDay?.dateString}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Time:</span>
+                    <span className="font-medium">
+                      {selectedStartTime} - {selectedEndTime}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Duration:</span>
+                    <span className="font-medium">{calculateDuration()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Vehicle:</span>
+                    <span className="font-medium text-right">
+                      {selectedVehicle?.brand} {selectedVehicle?.model}
+                      <br />
+                      <span className="text-sm text-gray-500">
+                        {selectedVehicle?.vehicleNumber}
+                      </span>
+                    </span>
+                  </div>
                 </div>
                 <div className="border-t border-gray-200 my-3"></div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">${calculateTotal()}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Service Fee:</span>
-                  <span className="font-medium">${(calculateTotal() * 0.1).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-semibold pt-2 border-t border-gray-200">
-                  <span>Total:</span>
-                  <span>${(calculateTotal() * 1.1).toFixed(2)}</span>
+                <div className="flex justify-between text-lg font-semibold">
+                  <span>Total Amount:</span>
+                  <span>₹{calculateTotal()}</span>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900">Payment Method</h3>
-                <div className="space-y-3">
-                  <div 
-                    onClick={() => handlePaymentMethodChange("wallet")}
-                    className={`p-3 border rounded-md cursor-pointer transition-colors
-                      ${bookingDetails.paymentMethod === "wallet" ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <div className="flex items-center">
-                      <Icon name="Wallet" size={20} className="mr-3 text-primary" />
-                      <div>
-                        <div className="font-medium">Wallet</div>
-                        <div className="text-sm text-gray-600">Balance: $125.00</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    onClick={() => handlePaymentMethodChange("card")}
-                    className={`p-3 border rounded-md cursor-pointer transition-colors
-                      ${bookingDetails.paymentMethod === "card" ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <div className="flex items-center">
-                      <Icon name="CreditCard" size={20} className="mr-3 text-primary" />
-                      <div>
-                        <div className="font-medium">Credit/Debit Card</div>
-                        <div className="text-sm text-gray-600">Visa •••• 4242</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    onClick={() => handlePaymentMethodChange("new_card")}
-                    className={`p-3 border rounded-md cursor-pointer transition-colors
-                      ${bookingDetails.paymentMethod === "new_card" ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <div className="flex items-center">
-                      <Icon name="Plus" size={20} className="mr-3 text-primary" />
-                      <div className="font-medium">Add new card</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Promo Code</h3>
-                <div className="flex">
-                  <input
-                    type="text"
-                    value={bookingDetails.promoCode}
-                    onChange={handlePromoCodeChange}
-                    placeholder="Enter promo code"
-                    className="flex-1 p-3 border border-gray-300 rounded-l-md"
-                  />
-                  <button className="bg-gray-100 text-gray-700 px-4 rounded-r-md border border-l-0 border-gray-300 hover:bg-gray-200">
-                    Apply
-                  </button>
-                </div>
+              <div className="border border-gray-200 rounded-md p-4">
+                <h3 className="font-medium mb-2">Parking Instructions</h3>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>Park in the designated spot number</li>
+                  <li>Lock your vehicle and take valuables with you</li>
+                  <li>Check in using the QR code when you arrive</li>
+                </ul>
               </div>
 
               <button
                 onClick={confirmBooking}
-                disabled={loading || !realTimeAvailability}
-                className="w-full py-3 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors flex items-center justify-center"
+                disabled={loading}
+                className="w-full py-3 bg-primary text-white rounded-md hover:bg-primary-dark flex items-center justify-center"
               >
-                {loading ? 'Processing...' : 'Confirm & Pay'}
+                {loading ? (
+                  <>
+                    <Icon name="Loader" className="animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  "Confirm Booking"
+                )}
               </button>
-
-              {!realTimeAvailability && (
-                <div className="text-red-500 text-sm text-center">
-                  This spot is no longer available for the selected time. Please choose a different time.
-                </div>
-              )}
             </div>
           )}
 
@@ -322,7 +439,7 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                 <Icon name="Check" size={32} className="text-green-600" />
               </div>
               
-              <h2 className="text-2xl font-semibold text-gray-900">Booking Confirmed!</h2>
+              <h2 className="text-2xl font-semibold">{sucessmsg}</h2>
               <p className="text-gray-600">Your parking spot has been successfully booked.</p>
               
               <div className="bg-gray-50 p-4 rounded-md text-left space-y-3">
@@ -331,19 +448,19 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                   <span className="font-medium">PSB-{Math.random().toString(36).substring(2, 10).toUpperCase()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Location:</span>
-                  <span className="font-medium text-right">{parkingSpot.address}</span>
+                  <span className="text-gray-600">Date:</span>
+                  <span className="font-medium">{selectedDay?.dateString}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Time:</span>
                   <span className="font-medium">
-                    {formatDate(bookingDetails.dateRange.start)} - {formatDate(bookingDetails.dateRange.end)}
+                    {selectedStartTime} - {selectedEndTime}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Vehicle:</span>
                   <span className="font-medium">
-                    {bookingDetails.vehicle?.make} {bookingDetails.vehicle?.model}
+                    {selectedVehicle?.brand} {selectedVehicle?.model}
                   </span>
                 </div>
               </div>
@@ -352,25 +469,22 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                 <div className="text-center mb-3">
                   <div className="text-sm text-gray-500 mb-1">Check-in QR Code</div>
                   <div className="inline-block p-2 bg-white">
-                    {/* Placeholder for QR code */}
                     <div className="w-32 h-32 bg-gray-100 flex items-center justify-center">
-                      <Icon name="QrCode" size={48} className="text-gray-400" />
+                      <img src={qrurl} alt="Booking QR Code" />
                     </div>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Show this QR code at the entrance for access. You'll also receive it via email.
+                  Show this QR code at the entrance for access.
                 </p>
               </div>
 
-              <div className="text-sm text-gray-500">
-                <p className="mb-2">Cancellation policy: Full refund if canceled at least 2 hours before booking time.</p>
-                <p>Need help? <a href="#" className="text-primary">Contact support</a></p>
-              </div>
-
               <button
-                onClick={onClose}
-                className="w-full py-3 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                 onClick={() => {
+                  onClose();
+                  navigate("/my-booking");
+                }}
+                className="w-full py-3 bg-primary text-white rounded-md hover:bg-primary-dark"
               >
                 Done
               </button>
@@ -383,3 +497,4 @@ const BookingModal = ({ parkingSpot, onClose }) => {
 };
 
 export default BookingModal;
+

@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Icon from "../../components/AppIcon";
 import TabSelector from "./components/TabSelector";
 import ParkingSpotCard from "./components/ParkingSpotCard";
 import EmptyState from "./components/EmptyState";
 import { Mycontext } from "context/context";
 import {
+  cancelBooking,
   getMyParkingSpot,
+  getuserBooking,
   toggleAvailability,
   updateParkingSpotTimeAvailability,
 } from "utils/helperFunctions";
@@ -14,24 +16,30 @@ import { toast } from "react-toastify";
 
 const MyParkingSpots = () => {
   const navigate = useNavigate();
-  const [userType, setUserType] = useState("owner");
+  const location = useLocation();
+  const [userType, setUserType] = useState(location.pathname === "/my-parking-spots" ? "owner" : "renter");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [ownerSpots, setOwnerSpots] = useState([]);
   const [renterBookings, setRenterBookings] = useState([]);
   const { token } = useContext(Mycontext);
+  
 
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const spotsResponse = await getMyParkingSpot();
-      
-      setOwnerSpots(spotsResponse.data);
-      console.log(spotsResponse.data)
-      setRenterBookings([]); // Add API call for renter bookings if available
+      if(userType==="owner"){
+        const spotsResponse = await getMyParkingSpot();    
+        setOwnerSpots(spotsResponse.data);
+      }else{
+      const bookingResponse = await getuserBooking()
+      setRenterBookings(bookingResponse.data); 
+      }
+    
+     
     } catch (err) {
       setError(
         err.response?.data?.error ||
@@ -41,10 +49,13 @@ const MyParkingSpots = () => {
       setIsLoading(false);
     }
   };
-
+  useEffect(()=>{
+    setUserType(location.pathname === "/my-parking-spots" ? "owner" : "renter")
+},[location.pathname])
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [userType]);
+ 
 
   const handleRefresh =  () => {
     if (isRefreshing) return;
@@ -62,6 +73,17 @@ const MyParkingSpots = () => {
       setIsRefreshing(false);
     }
   }
+
+  const handleTabChange = (newUserType) => {
+    if (newUserType !== userType) {
+      setUserType(newUserType);
+      // Navigate to the appropriate route based on the new userType
+      const newPath = newUserType === "owner" ? "/my-parking-spots" : "/my-booking";
+      if (location.pathname !== newPath) {
+        navigate(newPath);
+      }
+    }
+  };
 
   const handleToggleAvailability = async (spotId, isAvailable) => {
     try {
@@ -122,6 +144,22 @@ const MyParkingSpots = () => {
       console.log(err)
       setError(
         err.response?.data?.error || "Failed to update time availability."
+      );
+    }
+  };
+
+
+  const handleCancelBooking = async (bookingId) => {
+    try {
+      const response = await cancelBooking(bookingId)
+      if (response.success) {
+        toast.error(response.message);
+        fetchData(); 
+      }
+    } catch (error) {
+      console.error("Cancellation failed:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to cancel booking"
       );
     }
   };
@@ -189,6 +227,7 @@ const MyParkingSpots = () => {
               userType="owner"
               onToggleAvailability={handleToggleAvailability}
               onUpdateTimeWindow={handleUpdateTimeWindow}
+             
             />
           ))}
         </div>
@@ -201,9 +240,10 @@ const MyParkingSpots = () => {
       <div className="space-y-4">
         {renterBookings.map((booking) => (
           <ParkingSpotCard
-            key={booking.id}
+            key={booking._id}
             booking={booking}
             userType="renter"
+            onCancelBooking={handleCancelBooking}
           />
         ))}
       </div>
@@ -231,7 +271,7 @@ const MyParkingSpots = () => {
           </button>
         </div>
 
-        <TabSelector activeTab={userType} onTabChange={setUserType} />
+        <TabSelector activeTab={userType} onTabChange={handleTabChange} />
 
         {isRefreshing && !isLoading && (
           <div className="flex items-center justify-center py-2 text-primary text-sm">

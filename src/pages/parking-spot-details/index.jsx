@@ -396,7 +396,7 @@ const ParkingSpotDetails = () => {
   const [spotAvailable, setSpotAvailable] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const navigate = useNavigate();
-  const { token } = useContext(Mycontext);
+  const { token,openSignUpModal } = useContext(Mycontext);
   const { id } = useParams(); // Get parking spot ID from URL
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingDates, setBookingDates] = useState({
@@ -407,7 +407,7 @@ const ParkingSpotDetails = () => {
 
   const [bookingError, setBookingError] = useState(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  // console.log("parkingSpot",parkingSpot);
+  console.log("parkingSpot",parkingSpot);
   // console.log("parkingSpot.availability.availableDays",parkingSpot?.availability.availableDays);
   const fetchParkingSpotDetails = async () => {
     try {
@@ -429,9 +429,8 @@ const ParkingSpotDetails = () => {
   }, [id, token]);
 
   const handleBookNow = () => {
-    // alert("Booking functionality would be implemented here");
     if (!token) {
-      navigate('/login', { state: { from: `/parking-spots/${id}` } });
+      openSignUpModal()
       return;
     }
     setShowBookingModal(true);
@@ -489,7 +488,7 @@ const ParkingSpotDetails = () => {
   };
 
   const handleUnavailableSpot = () => {
-    setSpotAvailable(false);
+    setSpotAvailable(parkingSpot.isAvailable);
   };
 
   const handleReturnToSearch = () => {
@@ -529,7 +528,7 @@ const ParkingSpotDetails = () => {
             <Icon name="AlertTriangle" size={48} className="mx-auto text-warning mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Spot No Longer Available</h2>
             <p className="text-gray-600 mb-6">
-              Sorry, this parking spot has been booked by someone else. Please return to search to find another spot.
+              Sorry, this parking spot has been not available due to some issue check after some time.
             </p>
             <button
               onClick={handleReturnToSearch}
@@ -663,6 +662,7 @@ const ParkingSpotDetails = () => {
                   
                   <div className="mt-6">
                     <ActionButton 
+                    isAvailable={parkingSpot.isAvailable}
                       onClick={handleBookNow}
                       onUnavailable={handleUnavailableSpot}
                     />
@@ -676,15 +676,15 @@ const ParkingSpotDetails = () => {
          {showBookingModal && parkingSpot && (
           <BookingModal
             parkingSpot={parkingSpot}
-            bookingDates={bookingDates}
-            setBookingDates={setBookingDates}
-            bookingType={bookingType}
-            setBookingType={setBookingType}
-            totalPrice={calculateTotalPrice()}
+            // bookingDates={bookingDates}
+            // setBookingDates={setBookingDates}
+            // bookingType={bookingType}
+            // setBookingType={setBookingType}
+            // totalPrice={calculateTotalPrice()}
             onClose={() => setShowBookingModal(false)}
-            onConfirm={handleConfirmBooking}
-            error={bookingError}
-            success={bookingSuccess}
+            // onConfirm={handleConfirmBooking}
+            // error={bookingError}
+            // success={bookingSuccess}
           />
         )}
       </main>

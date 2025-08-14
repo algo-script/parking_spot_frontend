@@ -1,19 +1,13 @@
 import React, { useState } from "react";
 import Icon from "../../../components/AppIcon";
 
-const ActionButton = ({ onClick, onUnavailable }) => {
+const ActionButton = ({ onClick, onUnavailable ,isAvailable}) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const handleClick = () => {
     setIsLoading(true);
-    
-    // Simulate checking availability
     setTimeout(() => {
       setIsLoading(false);
-      
-      // Randomly determine if spot is available (90% chance it is)
-      const isAvailable = Math.random() > 0.1;
-      
       if (isAvailable) {
         onClick();
       } else {

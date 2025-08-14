@@ -5,7 +5,8 @@ export const Mycontext = createContext();
 
 export const ContextProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('authToken') || '');
-  // console.log(token);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('signin');
   
 
   const handleSetToken = (newToken) => {
@@ -18,9 +19,21 @@ export const ContextProvider = ({ children }) => {
     }
   };
 
+  const openSignInModal = () => {
+    setAuthModalTab('signin');
+    setAuthModalOpen(true);
+  };
+
+  const openSignUpModal = () => {
+    setAuthModalTab('signup');
+    setAuthModalOpen(true);
+  };
+
   const contextval = {
     token,
     setToken: handleSetToken,
+    authModalOpen, setAuthModalOpen,
+    authModalTab, setAuthModalTab,openSignInModal,openSignUpModal
   };
 
   return (

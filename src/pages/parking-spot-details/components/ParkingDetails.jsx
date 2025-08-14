@@ -2,7 +2,7 @@ import React from "react";
 import Icon from "../../../components/AppIcon";
 
 const ParkingDetails = ({ features }) => {
-   console.log("features",features)
+  //  console.log("features",features)
 
   const featuresList = [
     {

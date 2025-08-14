@@ -12,16 +12,13 @@ const Header = ({
   userLoggedIn = false,
   userName = 'User',
   userAvatar ,
-  onSearch,
   className = '',
 }) => {
-  const { token,setToken } = useContext(Mycontext);
+  const { token,setToken,openSignUpModal, openSignInModal} = useContext(Mycontext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState('signin');
+ 
   const location = useLocation();
   const navigate = useNavigate();
   const mobileMenuRef = useRef(null);
@@ -78,6 +75,10 @@ const Header = ({
     navigate("/user-profile/profile")
   }
 
+  const navigateToBooking = () =>{  
+    navigate("/my-booking")
+  }
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -106,24 +107,6 @@ const Header = ({
     if (isMenuOpen) setIsMenuOpen(false);
   };
 
-  // const handleSearchSubmit = (e) => {
-  //   e.preventDefault();
-  //   if (onSearch) onSearch(searchQuery);
-  // };
-
-  // const handleSearchChange = (e) => {
-  //   setSearchQuery(e.target.value);
-  // };
-
-  const openSignInModal = () => {
-    setAuthModalTab('signin');
-    setAuthModalOpen(true);
-  };
-
-  const openSignUpModal = () => {
-    setAuthModalTab('signup');
-    setAuthModalOpen(true);
-  };
 
   const isTransparent = variant === 'transparent';
   const isCompact = variant === 'compact';
@@ -152,7 +135,7 @@ const Header = ({
 
   const userMenuItems = [
     { name: 'Profile', icon: 'User', action:navigateToProfile },
-    { name: 'My Bookings', icon: 'Calendar', action: () => { } },
+    { name: 'My Bookings', icon: 'Calendar', action: navigateToBooking},
     { name: 'Settings', icon: 'Settings', action: () => { }},
     { name: 'Logout', icon: 'LogOut', action: handleLogout },
   ];
@@ -164,19 +147,6 @@ const Header = ({
       </div>
     </Link>
   );
-
-  // const renderSearch = () => (
-  //   <form onSubmit={handleSearchSubmit} className={`${isCompact ? 'max-w-md' : 'max-w-xl'} w-full mx-auto`}>
-  //     <Input
-  //       type="search"
-  //       placeholder="Find parking near you..."
-  //       value={searchQuery}
-  //       onChange={handleSearchChange}
-  //       icon="MapPin"
-  //       className={`${isTransparent ? 'bg-white bg-opacity-20 backdrop-blur-md border-white border-opacity-30 text-white placeholder-white placeholder-opacity-80' : ''}`}
-  //     />
-  //   </form>
-  // );
 
   const renderDesktopNav = () => (
     <div className="hidden md:flex items-center space-x-6">
@@ -209,9 +179,6 @@ const Header = ({
             <Icon name="X" size={24} />
           </button>
         </div>
-        {/* <div className="p-4"> */}
-          {/* {renderSearch()} */}
-        {/* </div> */}
         <nav className="flex-1 px-4 pb-4">
           <ul className="space-y-4">
             {navItems.map((item) => (
@@ -231,16 +198,8 @@ const Header = ({
         </nav>
         {userLoggedIn && (
           <div className="p-4 border-t">
-            <div className="flex items-center">
+            <div className="flex items-center gap-5">
             {renderAvatar(10)}
-              {/* <img
-                src={userAvatar}
-                alt={userName}
-                className="w-10 h-10 rounded-full mr-3"
-                // onError={(e) => {
-                //   e.target.src = "/assets/images/no_image.png"
-                // }}
-              /> */}
               <div>
                 <p className="font-medium text-gray-900">{userName}</p>
                 <p className="text-sm text-gray-800">View profile</p>
@@ -275,14 +234,6 @@ const Header = ({
         aria-haspopup="true"
       >
         {renderAvatar()}
-        {/* <img
-          src={userAvatar}
-          alt={userName}
-          className="w-8 h-8 rounded-full"
-          // onError={(e) => {
-          //   e.target.src = "/assets/images/no_image.png"
-          // }}
-        /> */}
         <span className={`ml-2 ${isTransparent ? 'text-white' : 'text-gray-700'} hidden sm:block`}>
           {userName}
         </span>
@@ -312,7 +263,8 @@ const Header = ({
 
   return (
     <>
-      <header className={`${baseClasses} ${variantClasses} ${className}`}>
+      {/* <header className={`${baseClasses} ${variantClasses} ${className}`}> */}
+      <header className='w-full z-50 py-4 bg-gray-50 text-gray-900'>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -325,12 +277,6 @@ const Header = ({
               </button>
               {renderLogo()}
             </div>
-
-            {/* {!isCompact && !isMobile && (
-              <div className="hidden md:block mx-4 flex-1">
-                {renderSearch()}
-              </div>
-            )} */}
 
             <div className="flex items-center space-x-4">
               {!isMobile && renderDesktopNav()}
@@ -358,21 +304,11 @@ const Header = ({
               )}
             </div>
           </div>
-
-          {/* {isCompact && (
-            <div className="mt-2">
-              {renderSearch()}
-            </div>
-          )} */}
         </div>
 
         {renderMobileMenu()}
       </header>
-      {authModalOpen && <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        initialTab={authModalTab}
-      />}
+     
     </>
   );
 };

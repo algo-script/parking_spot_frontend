@@ -57,7 +57,7 @@ function Image({
     <div className={`relative ${className}`}>
       {/* Main Image */}
       <img
-        src={`http://localhost:5510/${images[currentImageIndex]}`}
+        src={`${import.meta.env.VITE_APP_BASE_URL}/${images[currentImageIndex]}`}
         alt={alt}
         className="w-full h-full object-cover"
         {...props}
