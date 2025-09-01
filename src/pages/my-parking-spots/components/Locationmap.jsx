@@ -7,11 +7,11 @@ const Locationmap = ({ latitude, longitude ,name}) => {
   const olaMapsRef = useRef(null);
   const markerRef = useRef(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
-  const [initialCoords, setInitialCoords] = useState({ lat: latitude, lng: longitude });
+  // const [initialCoords, setInitialCoords] = useState({ lat: latitude, lng: longitude });
 
   const API_KEY = "Qb1tCYd0ghxhAyc3s1pB4AouMSrYYR8bf5X34TPE"; // Your OlaMaps API key
 
-  // Initialize map and fixed marker
+ 
   useEffect(() => {
     const initializeMap = async () => {
       try {
@@ -21,22 +21,20 @@ const Locationmap = ({ latitude, longitude ,name}) => {
         const map = olaMaps.init({
           container: mapContainerRef.current,
           style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
-          center: [initialCoords.lng, initialCoords.lat],
+          center: [longitude,latitude],
           zoom: 16,
         });
 
         mapInstanceRef.current = map;
-
-        // Add fixed marker at center (not draggable)
         const marker = olaMaps
           .addMarker({
             offset: [0, 0],
             anchor: "bottom",
             color: "blue",
-            draggable: false, // Marker stays fixed at center
+            draggable: false, 
             // title: name
           })
-          .setLngLat([initialCoords.lng, initialCoords.lat])
+          .setLngLat([longitude,latitude])
           .addTo(map);
         markerRef.current = marker;
 
@@ -46,7 +44,7 @@ const Locationmap = ({ latitude, longitude ,name}) => {
       }
     };
 
-    if (!isMapInitialized && initialCoords.lat && initialCoords.lng) {
+    if (!isMapInitialized &&latitude && longitude) {
       initializeMap();
     }
 
@@ -59,7 +57,7 @@ const Locationmap = ({ latitude, longitude ,name}) => {
         mapInstanceRef.current.remove();
       }
     };
-  }, [initialCoords]); // Depend only on initialCoords to avoid reinitialization
+  }, [latitude, longitude]); // Depend only on initialCoords to avoid reinitialization
 
   // Sync map center and marker with prop changes
   useEffect(() => {

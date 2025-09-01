@@ -6,6 +6,7 @@ const FormInput = ({
   name,
   value,
   onChange,
+  onFocus,
   placeholder,
   type = "text",
   error,
@@ -50,6 +51,7 @@ const FormInput = ({
             name={name}
             value={value}
             onChange={onChange}
+            onFocus={onFocus}
             placeholder={placeholder}
             inputMode={inputMode}
             className={`w-full px-3 py-2 ${

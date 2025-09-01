@@ -7,15 +7,19 @@ export const ContextProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('authToken') || '');
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('signin');
+  const [userRole,setuserRole] = useState(localStorage.getItem('role') || '');
   
 
-  const handleSetToken = (newToken) => {
+  const handleSetToken = (newToken,newrole) => {
     setToken(newToken);
+    setuserRole(newrole)
     if (newToken) {
       localStorage.setItem('authToken', newToken);
+      localStorage.setItem('role', newrole);
     } else {
       setToken('')
-      localStorage.removeItem('authToken');
+      setuserRole('')
+      localStorage.clear();
     }
   };
 
@@ -33,7 +37,7 @@ export const ContextProvider = ({ children }) => {
     token,
     setToken: handleSetToken,
     authModalOpen, setAuthModalOpen,
-    authModalTab, setAuthModalTab,openSignInModal,openSignUpModal
+    authModalTab, setAuthModalTab,openSignInModal,openSignUpModal,userRole
   };
 
   return (

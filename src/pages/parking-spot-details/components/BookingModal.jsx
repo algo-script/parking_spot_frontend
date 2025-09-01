@@ -1,101 +1,99 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import Icon from "../../../components/AppIcon";
-import { callconfirmBooking, getVehicle } from "utils/helperFunctions";
+import {
+  callconfirmBooking,
+  formatPrice,
+  formatTimeString,
+  getAvailableTimes,
+  getVehicle,
+} from "utils/helperFunctions";
 import { useNavigate } from "react-router-dom";
 
 const BookingModal = ({ parkingSpot, onClose }) => {
   const [step, setStep] = useState(1);
-  const [selectedDay, setSelectedDay] = useState(null);
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [availableVehicles, setAvailableVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [error, setError] = useState(null);
-  const [sucessmsg,setSucessmsg] = useState("")
-  const [qrurl, setQrurl] = useState(null);
+  const [sucessmsg, setSucessmsg] = useState("");
   const navigate = useNavigate();
+  const [selectedDate, setSelectedDate] = useState();
+  const [availabilityData, setAvailabilityData] = useState(null);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
+  console.log(selectedStartTime);
 
+  // const generateTimeSlots = () => {
+  //   if (!availabilityData) return [];
 
-  // Get available days with dates and time slots
-  const getAvailableDaysWithDates = () => {
-    const today = moment();
-    const currentDay = today.day();
-    const currentTime = today.format("HH:mm");
+  //   const allSlots = [];
+  //   availabilityData.forEach((range) => {
+  //     const start = moment(range.start, "HH:mm");
+  //     const end = moment(range.end, "HH:mm");
 
-    const dayMap = [
-      { id: "sunday", name: "Sunday", dayIndex: 0 },
-      { id: "monday", name: "Monday", dayIndex: 1 },
-      { id: "tuesday", name: "Tuesday", dayIndex: 2 },
-      { id: "wednesday", name: "Wednesday", dayIndex: 3 },
-      { id: "thursday", name: "Thursday", dayIndex: 4 },
-      { id: "friday", name: "Friday", dayIndex: 5 },
-      { id: "saturday", name: "Saturday", dayIndex: 6 },
-    ];
+  //     let currentTime = start.clone();
 
-    return dayMap
-      .filter((day) => parkingSpot.availability.availableDays[day.id])
-      .map((day) => {
-        let daysToAdd = (day.dayIndex - currentDay + 7) % 7;
-        const isToday = daysToAdd === 0;
-        
-        const date = today.clone().add(daysToAdd, 'days');
-        
-        let availableSlots = [];
-        if (isToday) {
-          const startTime = moment(parkingSpot.availability.startTime, "HH:mm");
-          const endTime = moment(parkingSpot.availability.endTime, "HH:mm");
-          
-          if (moment(currentTime, "HH:mm").isSameOrAfter(startTime)) {
-            // Start from current time rounded to next 30-minute interval
-            let slotTime = moment(currentTime, "HH:mm");
-            
-            // Round up to next 30 minutes
-            const minutes = slotTime.minutes();
-            if (minutes > 0 && minutes < 30) {
-              slotTime.add(30 - minutes, 'minutes');
-            } else if (minutes > 30) {
-              slotTime.add(60 - minutes, 'minutes');
-            }
-            
-            while (slotTime.isSameOrBefore(endTime)) {
-              availableSlots.push(slotTime.format("HH:mm"));
-              slotTime.add(30, 'minutes');
-            }
-          }
-        }
-        
-        return {
-          ...day,
-          date,
-          dateString: date.format("ddd, MMM D"),
-          isToday,
-          availableSlots
-        };
-      })
-      .sort((a, b) => a.date - b.date);
+  //     while (currentTime.isSameOrBefore(end)) {
+  //       allSlots.push(currentTime.format("H:mm A"));
+  //       currentTime.add(30, "minutes");
+  //     }
+  //   });
+
+  //   return [...new Set(allSlots)]; // Remove duplicates
+  // };
+  const generateTimeSlots = () => {
+    if (!availabilityData) return [];
+    const allSlots = [];
+    availabilityData.forEach((range) => {
+      const start = moment(range.start, "HH:mm");
+      const end = moment(range.end, "HH:mm");
+
+      let currentTime = start.clone();
+
+      while (currentTime.isSameOrBefore(end)) {
+        allSlots.push(currentTime.format("h:mm A")); // Changed to 12-hour format
+        currentTime.add(30, "minutes");
+      }
+    });
+
+    return [...new Set(allSlots)]; // Remove duplicates
   };
 
-  const generateTimeSlots = () => {
-    if (!selectedDay) return [];
-    
-    if (selectedDay.isToday && selectedDay.availableSlots?.length > 0) {
-      return selectedDay.availableSlots;
+  const getAvailableRanges = () => {
+    if (!availabilityData) return [];
+    return availabilityData;
+  };
+
+  const handleDateChange = async (e) => {
+    const date = e.target.value;
+    setSelectedDate(date);
+    setError("");
+    setSelectedStartTime("");
+    setSelectedEndTime("");
+    setLoadingAvailability(true);
+
+    try {
+      const response = await getAvailableTimes({
+        parkingSpotId: parkingSpot._id,
+        date,
+      });
+
+      if (response.success) {
+        setAvailabilityData(response.slots);
+      } else {
+        setAvailabilityData([]);
+        setError(response.message);
+      }
+    } catch (error) {
+      console.error("Error fetching availability:", error);
+      setError(error.message || "Failed to check availability");
+      setAvailabilityData([]);
+    } finally {
+      setLoadingAvailability(false);
     }
-
-    const startTime = moment(parkingSpot.availability.startTime, "HH:mm");
-    const endTime = moment(parkingSpot.availability.endTime, "HH:mm");
-
-    const slots = [];
-    let currentTime = startTime.clone();
-
-    while (currentTime.isSameOrBefore(endTime)) {
-      slots.push(currentTime.format("HH:mm"));
-      currentTime.add(30, 'minutes');
-    }
-
-    return slots;
   };
 
   const fetchVehicles = async () => {
@@ -104,7 +102,8 @@ const BookingModal = ({ parkingSpot, onClose }) => {
       const response = await getVehicle();
       if (response.success) {
         setAvailableVehicles(response.data);
-        const defaultVehicle = response.data.find(v => v.defaultVehicle) || response.data[0];
+        const defaultVehicle =
+          response.data.find((v) => v.defaultVehicle) || response.data[0];
         setSelectedVehicle(defaultVehicle);
       }
     } catch (error) {
@@ -119,21 +118,28 @@ const BookingModal = ({ parkingSpot, onClose }) => {
   }, []);
 
   useEffect(() => {
-    if (selectedDay) {
+    if (availabilityData?.length > 0) {
       const slots = generateTimeSlots();
       if (slots.length > 0) {
         setSelectedStartTime(slots[0]);
         const endIndex = Math.min(1, slots.length - 1); // Default 30 minutes
         setSelectedEndTime(slots[endIndex]);
-      } else {
-        setError("No available time slots for selected day");
       }
     }
-  }, [selectedDay]);
+  }, [availabilityData]);
 
-  const handleDaySelection = (day) => {
-    setError(null);
-    setSelectedDay(day);
+  const isTimeInAvailableRange = (startTime, endTime) => {
+    if (!availabilityData) return false;
+
+    const start = moment(startTime, "h:mm A");
+    const end = moment(endTime, "h:mm A");
+
+    return availabilityData.some((range) => {
+      const rangeStart = moment(range.start, "HH:mm");
+      const rangeEnd = moment(range.end, "HH:mm");
+
+      return start.isSameOrAfter(rangeStart) && end.isSameOrBefore(rangeEnd);
+    });
   };
 
   const handleTimeChange = (type, value) => {
@@ -151,51 +157,46 @@ const BookingModal = ({ parkingSpot, onClose }) => {
 
   const calculateDuration = () => {
     if (!selectedStartTime || !selectedEndTime) return "00:00";
-  
-    const start = moment(selectedStartTime, "HH:mm");
-    const end = moment(selectedEndTime, "HH:mm");
-    
+
+    const start = moment(selectedStartTime, "h:mm A");
+    const end = moment(selectedEndTime, "h:mm A");
+
     const duration = moment.duration(end.diff(start));
-    const hours = duration.hours().toString().padStart(2, '0');
-    const minutes = duration.minutes().toString().padStart(2, '0');
-  
+    const hours = duration.hours().toString().padStart(2, "0");
+    const minutes = duration.minutes().toString().padStart(2, "0");
+
     return `${hours}:${minutes}`;
   };
 
   const calculateTotal = () => {
-    if (!selectedStartTime || !selectedEndTime) return parkingSpot.hourlyRate.toFixed(2);
-
-    const start = moment(selectedStartTime, "HH:mm");
-    const end = moment(selectedEndTime, "HH:mm");
-    
+    if (!selectedStartTime || !selectedEndTime)
+      return parkingSpot.hourlyRate.toFixed(2);
+    const start = moment(selectedStartTime, "h:mm A");
+    const end = moment(selectedEndTime, "h:mm A");
     const duration = moment.duration(end.diff(start));
     const totalHours = duration.asHours();
-
     return (totalHours * parkingSpot.hourlyRate).toFixed(2);
   };
 
   const confirmBooking = async () => {
     setLoading(true);
     try {
-      // Prepare the data to be sent to the backend
       const bookingData = {
         parkingSpotId: parkingSpot._id,
         vehicleId: selectedVehicle._id,
-        date: selectedDay.date.format("YYYY-MM-DD"),
-        startTime: selectedStartTime,
-        endTime: selectedEndTime,
+        date: selectedDate,
+        startTime: moment(selectedStartTime, "hh:mm A").format("HH:mm"),
+        endTime: moment(selectedEndTime, "hh:mm A").format("HH:mm"),
         duration: calculateDuration(),
-        totalAmount: calculateTotal()
+        totalAmount: calculateTotal(),
       };
-   
-      const response = await callconfirmBooking(bookingData)
-      if(response.success){
-        setSucessmsg(response.message)
-        setQrurl(response.qrCodeUrl)
+
+      const response = await callconfirmBooking(bookingData);
+      if (response.success) {
+        setSucessmsg(response.message);
+        setBookingData(response.booking);
         setStep(3);
       }
-  
-    
     } catch (error) {
       setError(error.message || "Booking failed. Please try again.");
     } finally {
@@ -207,13 +208,24 @@ const BookingModal = ({ parkingSpot, onClose }) => {
     <div className="flex justify-center mb-6">
       {[1, 2, 3].map((stepNum) => (
         <div key={stepNum} className="flex items-center">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center 
-            ${step === stepNum ? 'bg-primary text-white' : 
-             step > stepNum ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center 
+              ${
+                step === stepNum
+                  ? "bg-primary text-white"
+                  : step > stepNum
+                  ? "bg-green-100 text-green-600"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+          >
             {stepNum}
           </div>
           {stepNum < 3 && (
-            <div className={`w-8 h-1 mx-1 ${step > stepNum ? 'bg-green-100' : 'bg-gray-200'}`}></div>
+            <div
+              className={`w-8 h-1 mx-1 ${
+                step > stepNum ? "bg-green-100" : "bg-gray-200"
+              }`}
+            ></div>
           )}
         </div>
       ))}
@@ -221,11 +233,25 @@ const BookingModal = ({ parkingSpot, onClose }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 min-h-screen  bg-black/30 backdrop-blur-sm transition-all duration-300 overflow-y-auto"
+      style={{
+        overflow: "auto",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}
+    >
+      <div className="absolute inset-0 opacity-75" onClick={onClose}></div>
+      <div
+        className="relative bg-white rounded-xl shadow-xl w-full  max-w-md mx-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
               <Icon name="X" size={24} />
             </button>
             <h2 className="text-xl font-semibold">Book Parking Spot</h2>
@@ -244,40 +270,81 @@ const BookingModal = ({ parkingSpot, onClose }) => {
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-2">Select Date</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {getAvailableDaysWithDates().map((day) => (
-                    <button
-                      key={day.dateString}
-                      onClick={() => handleDaySelection(day)}
-                      className={`p-3 border rounded-md text-center transition-colors
-                        ${selectedDay?.dateString === day.dateString
-                          ? "border-primary bg-primary-50"
-                          : "border-gray-200 hover:border-gray-300"}`}
-                    >
-                      <div className="font-medium">{day.name}</div>
-                      <div className="text-sm text-gray-600">{day.dateString}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {parkingSpot.availability.startTime} - {parkingSpot.availability.endTime}
-                      </div>
-                    </button>
-                  ))}
+                <div>
+                  <label
+                    htmlFor="selectedDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    id="selectedDate"
+                    name="selectedDate"
+                    value={selectedDate}
+                    onChange={handleDateChange}
+                    min={moment().format("YYYY-MM-DD")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
                 </div>
               </div>
 
-              {selectedDay && (
+              {loadingAvailability ? (
+                <div className="flex justify-center py-4">
+                  <Icon name="Loader" className="animate-spin" />
+                </div>
+              ) : availabilityData?.length > 0 ? (
                 <div>
                   <h3 className="text-lg font-medium mb-2">Select Time</h3>
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      Available Time Ranges:
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {getAvailableRanges().map((range, index) => {
+                        const rangeStart = moment(range.start, "HH:mm");
+                        const rangeEnd = moment(range.end, "HH:mm");
+                        const selectedStart = moment(
+                          selectedStartTime,
+                          "h:mm A"
+                        );
+                        const selectedEnd = moment(selectedEndTime, "h:mm A");
+                        const isActive =
+                          selectedStart.isSameOrAfter(rangeStart) &&
+                          selectedEnd.isSameOrBefore(rangeEnd);
+
+                        return (
+                          <div
+                            key={index}
+                            className={`px-3 py-1 rounded-full text-xs ${
+                              isActive
+                                ? "bg-primary text-white"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {moment(range.start, "HH:mm").format("h:mm A")} -{" "}
+                            {moment(range.end, "HH:mm").format("h:mm A")}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1">From</label>
+                      <label className="block text-sm font-medium mb-1">
+                        From
+                      </label>
                       <select
                         value={selectedStartTime}
-                        onChange={(e) => handleTimeChange("start", e.target.value)}
+                        onChange={(e) =>
+                          handleTimeChange("start", e.target.value)
+                        }
                         className="w-full p-3 border border-gray-300 rounded-md"
                       >
                         {generateTimeSlots().map((time, index) => (
-                          <option 
-                            key={`start-${index}`} 
+                          <option
+                            key={`start-${index}`}
                             value={time}
                             disabled={time >= selectedEndTime}
                           >
@@ -287,10 +354,14 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">To</label>
+                      <label className="block text-sm font-medium mb-1">
+                        To
+                      </label>
                       <select
                         value={selectedEndTime}
-                        onChange={(e) => handleTimeChange("end", e.target.value)}
+                        onChange={(e) =>
+                          handleTimeChange("end", e.target.value)
+                        }
                         className="w-full p-3 border border-gray-300 rounded-md"
                       >
                         {generateTimeSlots().map((time, index) => (
@@ -305,7 +376,25 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                       </select>
                     </div>
                   </div>
+
+                  {/* Validation - ensure selected time is within an available range */}
+                  {selectedStartTime &&
+                    selectedEndTime &&
+                    !isTimeInAvailableRange(
+                      selectedStartTime,
+                      selectedEndTime
+                    ) && (
+                      <div className="mt-2 text-sm text-red-600">
+                        Selected time must be within one of the available ranges
+                      </div>
+                    )}
                 </div>
+              ) : !selectedDate ? (
+                <div className="text-center py-4 text-gray-500">
+                  Please select valid date for see availability
+                </div>
+              ) : (
+                <></>
               )}
 
               <div className="pt-4 border-t border-gray-200">
@@ -322,9 +411,11 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                       key={vehicle._id}
                       onClick={() => setSelectedVehicle(vehicle)}
                       className={`p-3 border rounded-md cursor-pointer transition-colors
-                        ${selectedVehicle?._id === vehicle._id
-                          ? "border-primary bg-primary-50"
-                          : "border-gray-200 hover:border-gray-300"}`}
+                          ${
+                            selectedVehicle?._id === vehicle._id
+                              ? "border-primary bg-primary-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
                     >
                       <div className="flex justify-between items-center">
                         <div>
@@ -342,26 +433,36 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                         )}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {vehicle.color} • {vehicle.type} {vehicle.isElectric && "• Electric"}
+                        {vehicle.color} • {vehicle.type}{" "}
+                        {vehicle.isElectric && "• Electric"}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {selectedDay && ( <div className="bg-gray-50 p-4 rounded-md">
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total:</span>
-                  <span>₹{calculateTotal()}</span>
+              {selectedDate && selectedStartTime && selectedEndTime && (
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total:</span>
+                    <span>{formatPrice(calculateTotal())}</span>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    {calculateDuration()} @{" "}
+                    {formatPrice(parkingSpot.hourlyRate)}/hour
+                  </div>
                 </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  {calculateDuration()} @ ₹{parkingSpot.hourlyRate}/hour
-                </div>
-              </div>)}
+              )}
 
               <button
                 onClick={() => setStep(2)}
-                disabled={!selectedDay || !selectedVehicle}
+                disabled={
+                  !selectedDate ||
+                  !selectedVehicle ||
+                  !selectedStartTime ||
+                  !selectedEndTime ||
+                  !isTimeInAvailableRange(selectedStartTime, selectedEndTime)
+                }
                 className="w-full py-3 bg-primary text-white rounded-md hover:bg-primary-dark disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Continue
@@ -372,17 +473,20 @@ const BookingModal = ({ parkingSpot, onClose }) => {
           {step === 2 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold">Confirm Your Booking</h2>
-              
+
               <div className="bg-gray-50 p-4 rounded-md">
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Date:</span>
-                    <span className="font-medium">{selectedDay?.dateString}</span>
+                    <span className="font-medium">
+                      {moment(selectedDate).format("DD/MM/YYYY")}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Time:</span>
                     <span className="font-medium">
-                      {selectedStartTime} - {selectedEndTime}
+                      {formatTimeString(selectedStartTime)} -{" "}
+                      {formatTimeString(selectedEndTime)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -403,7 +507,7 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                 <div className="border-t border-gray-200 my-3"></div>
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total Amount:</span>
-                  <span>₹{calculateTotal()}</span>
+                  <span>{formatPrice(calculateTotal())}</span>
                 </div>
               </div>
 
@@ -438,39 +542,46 @@ const BookingModal = ({ parkingSpot, onClose }) => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
                 <Icon name="Check" size={32} className="text-green-600" />
               </div>
-              
+
               <h2 className="text-2xl font-semibold">{sucessmsg}</h2>
-              <p className="text-gray-600">Your parking spot has been successfully booked.</p>
-              
+              <p className="text-gray-600">
+                Your parking spot has been successfully booked.
+              </p>
+
               <div className="bg-gray-50 p-4 rounded-md text-left space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Booking ID:</span>
-                  <span className="font-medium">PSB-{Math.random().toString(36).substring(2, 10).toUpperCase()}</span>
+                  <span className="font-medium">{bookingData.bookingId} </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Date:</span>
-                  <span className="font-medium">{selectedDay?.dateString}</span>
+                  <span className="font-medium">
+                    {moment(selectedDate).format("DD/MM/YYYY")}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Time:</span>
                   <span className="font-medium">
-                    {selectedStartTime} - {selectedEndTime}
+                    {formatTimeString(bookingData.startTime)} -{" "}
+                    {formatTimeString(bookingData.endTime)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Vehicle:</span>
                   <span className="font-medium">
-                    {selectedVehicle?.brand} {selectedVehicle?.model}
+                    {bookingData.vehicle?.brand} {bookingData.vehicle?.model}
                   </span>
                 </div>
               </div>
 
               <div className="border border-dashed border-gray-300 rounded-md p-4">
                 <div className="text-center mb-3">
-                  <div className="text-sm text-gray-500 mb-1">Check-in QR Code</div>
+                  <div className="text-sm text-gray-500 mb-1">
+                    Check-in QR Code
+                  </div>
                   <div className="inline-block p-2 bg-white">
                     <div className="w-32 h-32 bg-gray-100 flex items-center justify-center">
-                      <img src={qrurl} alt="Booking QR Code" />
+                      <img src={bookingData.qrCodeUrl} alt="Booking QR Code" />
                     </div>
                   </div>
                 </div>
@@ -480,7 +591,7 @@ const BookingModal = ({ parkingSpot, onClose }) => {
               </div>
 
               <button
-                 onClick={() => {
+                onClick={() => {
                   onClose();
                   navigate("/my-booking");
                 }}
@@ -497,4 +608,3 @@ const BookingModal = ({ parkingSpot, onClose }) => {
 };
 
 export default BookingModal;
-

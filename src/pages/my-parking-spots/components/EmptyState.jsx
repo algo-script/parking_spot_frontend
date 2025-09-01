@@ -2,7 +2,7 @@ import React from "react";
 import Icon from "../../../components/AppIcon";
 
 const EmptyState = ({ userType, onAddParkingSpot, onFindParking }) => {
-  // Content based on user type
+
   const content = {
     owner: {
       title: "No Parking Spots Yet",

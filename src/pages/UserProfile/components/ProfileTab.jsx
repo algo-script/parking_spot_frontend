@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Icon from "../../../components/AppIcon";
+import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
 import { updateUserProfile } from "utils/helperFunctions";
 import { toast } from "react-toastify";
+import { Mycontext } from "context/context";
 
 // Profile Tab
 const ProfileTab = ({ user, fetchUserData }) => {
@@ -14,14 +17,9 @@ const ProfileTab = ({ user, fetchUserData }) => {
     responseTime: "",
   });
   const [imageFile, setImageFile] = useState(null);
-  const [errors, setErrors] = useState({
-    name: "",
-    email: "",
-    mobile: "",
-    profileImage: "",
-    responseTime: "",
-    general: "",
-  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { userRole } = useContext(Mycontext);
 
   const responseTimeOptions = [
     "Within an hour",
@@ -38,11 +36,31 @@ const ProfileTab = ({ user, fetchUserData }) => {
       profileImage: user?.profileImage || "",
       responseTime: user?.responseTime || "",
     });
+    setErrors({});
   }, [user]);
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateMobile = (mobile) => {
+    // if (!mobile) return true; // Mobile is optional
+    const mobileRegex = /^[0-9]{10}$/;
+    return mobileRegex.test(mobile);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Format mobile input to only allow digits and limit to 10 characters
+    let processedValue = value;
+    if (name === 'mobile') {
+      processedValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+    
+    setFormData((prev) => ({ ...prev, [name]: processedValue }));
+    
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -78,40 +96,30 @@ const ProfileTab = ({ user, fetchUserData }) => {
   };
 
   const validateForm = () => {
-    let valid = true;
-    const newErrors = {
-      name: "",
-      email: "",
-      mobile: "",
-      profileImage: "",
-      responseTime: "",
-      general: "",
-    };
+    const newErrors = {};
 
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
-      valid = false;
     }
 
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!validateEmail(formData.email)) {
       newErrors.email = "Please enter a valid email address";
-      valid = false;
     }
 
-    if (formData.mobile && !/^[0-9]{10,15}$/.test(formData.mobile)) {
-      newErrors.mobile = "Please enter a valid mobile number";
-      valid = false;
+    if (formData.mobile && !validateMobile(formData.mobile)) {
+      newErrors.mobile = "Please enter a valid 10-digit mobile number";
     }
 
     setErrors(newErrors);
-    return valid;
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSaveProfile = async () => {
     if (!validateForm()) return;
+
+    setIsSubmitting(true);
 
     try {
       const formDataToSend = new FormData();
@@ -129,13 +137,16 @@ const ProfileTab = ({ user, fetchUserData }) => {
         setImageFile(null);
         setIsEditing(false);
         toast.success(response.message);
+      } else {
+        toast.error(response.message || "Failed to update profile");
       }
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Failed to update profile";
-      setErrors((prev) => ({ ...prev, general: errorMessage }));
       toast.error(errorMessage);
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -148,45 +159,39 @@ const ProfileTab = ({ user, fetchUserData }) => {
       responseTime: user?.responseTime || "",
     });
     setImageFile(null);
-    setErrors({
-      name: "",
-      email: "",
-      mobile: "",
-      profileImage: "",
-      responseTime: "",
-      general: "",
-    });
+    setErrors({});
     setIsEditing(false);
   };
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800">
           Profile Information
         </h2>
         {!isEditing ? (
-          <button
+          <Button
             onClick={() => setIsEditing(true)}
-            className="flex items-center text-primary hover:text-primary-dark px-3 py-1 md:px-4 md:py-2 rounded-md text-sm md:text-base"
+            variant="outline"
+            className="flex items-center"
           >
-            <Icon name="Edit" size={16} className="mr-1" />
+            <Icon name="Edit" size={16} className="mr-2" />
             <span className="hidden sm:inline">Edit Profile</span>
             <span className="sm:hidden">Edit</span>
-          </button>
+          </Button>
         ) : (
           <div className="flex gap-2">
-            <button
+            <Button
               onClick={handleCancelEdit}
-              className="px-3 py-1 md:px-4 md:py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200 text-sm md:text-base"
+              variant="outline"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
-      <div className="flex flex-row items-center mb-4">
+      <div className="flex flex-row items-center mb-6">
         <div className="mb-2 md:mb-4 mr-4 flex-shrink-0">
           {user?.profileImage || imageFile ? (
             <img
@@ -215,18 +220,9 @@ const ProfileTab = ({ user, fetchUserData }) => {
       </div>
 
       {isEditing ? (
-        <div className="grid grid-cols-1 gap-4">
-          {errors.general && (
-            <div className="text-red-500 text-sm p-2 bg-red-50 rounded-md">
-              {errors.general}
-            </div>
-          )}
-
+        <div className="space-y-4">
           <div>
-            <label
-              htmlFor="profileImage"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Profile Image
             </label>
             <input
@@ -238,7 +234,7 @@ const ProfileTab = ({ user, fetchUserData }) => {
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             {errors.profileImage && (
-              <p className="text-red-500 text-xs mt-1">{errors.profileImage}</p>
+              <p className="mt-1 text-sm text-red-600">{errors.profileImage}</p>
             )}
             {imageFile && (
               <img
@@ -250,128 +246,115 @@ const ProfileTab = ({ user, fetchUserData }) => {
           </div>
 
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Name
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Name *
             </label>
-            <input
+            <Input
               type="text"
-              id="name"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 text-sm border ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:ring-2 focus:ring-primary focus:border-transparent`}
+              placeholder="Enter your full name"
+              className="w-full"
             />
             {errors.name && (
-              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
             )}
           </div>
 
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Email
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
             </label>
-            <input
+            <Input
               type="email"
-              id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 text-sm border ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:ring-2 focus:ring-primary focus:border-transparent`}
+              placeholder="Enter your email address"
+              className="w-full"
             />
             {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
             )}
           </div>
 
           <div>
-            <label
-              htmlFor="mobile"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Mobile
             </label>
-            <input
+            <Input
               type="tel"
-              id="mobile"
               name="mobile"
               value={formData.mobile}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 text-sm border ${
-                errors.mobile ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:ring-2 focus:ring-primary focus:border-transparent`}
+              placeholder="Enter your mobile number"
+              maxLength="10"
+              className="w-full"
             />
             {errors.mobile && (
-              <p className="text-red-500 text-xs mt-1">{errors.mobile}</p>
+              <p className="mt-1 text-sm text-red-600">{errors.mobile}</p>
             )}
           </div>
 
-          <div>
-            <label
-              htmlFor="responseTime"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Response Time
-            </label>
-            <select
-              id="responseTime"
-              name="responseTime"
-              value={formData.responseTime}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="">Select response time</option>
-              {responseTimeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
+          {userRole === "User" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Response Time
+              </label>
+              <select
+                name="responseTime"
+                value={formData.responseTime}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="">Select response time</option>
+                {responseTimeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          <div className="flex justify-end mt-4">
-            <button
+          <div className="flex justify-end pt-4">
+            <Button
               onClick={handleSaveProfile}
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors duration-200 text-sm md:text-base"
+              variant="primary"
+              disabled={isSubmitting}
             >
-              Save Changes
-            </button>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
         </div>
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
-            <div className="bg-gray-50 p-3 md:p-4 rounded-lg">
+            <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-medium text-gray-700 mb-2">
                 Personal Information
               </h3>
-              <p className="text-sm md:text-base text-gray-700">
+              <p className="text-sm text-gray-700">
                 <span className="font-medium">Name:</span> {user?.name}
               </p>
-              <p className="text-sm md:text-base text-gray-700">
+              <p className="text-sm text-gray-700">
                 <span className="font-medium">Email:</span> {user?.email}
               </p>
-              <p className="text-sm md:text-base text-gray-700">
+              <p className="text-sm text-gray-700">
                 <span className="font-medium">Mobile:</span>{" "}
                 {user?.mobile || "Not provided"}
               </p>
             </div>
-            <div className="bg-gray-50 p-3 md:p-4 rounded-lg">
-              <h3 className="font-medium text-gray-700 mb-2">Preferences</h3>
-              <p className="text-sm md:text-base text-gray-700">
-                <span className="font-medium">Response Time:</span>{" "}
-                {user?.responseTime || "Not set"}
-              </p>
-            </div>
+            {userRole === "User" && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium text-gray-700 mb-2">Preferences</h3>
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Response Time:</span>{" "}
+                  {user?.responseTime || "Not set"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

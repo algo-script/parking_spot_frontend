@@ -103,7 +103,70 @@ export const cancelBooking = async (bookingId) => {
   return response.data;
 };
 
+export const getAvailableTimes = async (data) => {
+  const response = await axiosInstance.post(`/user/getAvailableTimes`,data);
+  return response.data;
+};
+
+
+export const addGuardDetails = async (data) => {
+  const response = await axiosInstance.post(`/user/add-guarddetails`,data);
+  return response.data;
+};
+export const updateGuardDetails = async (data) => {
+  const response = await axiosInstance.post(`/user/update-guarddetails`,data);
+  return response.data;
+};
+
+//GuardApi
+// /guarddashboard
+// /complete-booking
+export const guardDashboard = async () =>{
+  const response = await axiosInstance.get(`/guard/guarddashboard`);
+  return response.data;
+}
+export const checkOutvehicle = async (bookingId) => {
+  const response = await axiosInstance.post(`/guard/complete-booking`,bookingId);
+  return response.data;
+};
+
+export const verifyBooking = async (bookingId) => {
+  const response = await axiosInstance.post(`/guard/verify-booking`,bookingId);
+  return response.data;
+};
+
+export const confirmEntry = async (bookingId) => {
+  const response = await axiosInstance.post(`/guard/confirm-entry`,bookingId);
+  return response.data;
+};
+
+export const bookingDetaiils = async (params) => {
+  const response = await axiosInstance.get(`/guard/booking-details`,{params});
+  return response.data;
+}
+
+
+
+//admin apis 
+// /userdata
+export const getUserData = async (params) => {
+  const response = await axiosInstance.get(`/admin/userdata`,{params});
+  return response.data;
+}
+
 export const formatTimeString = (timeStr) => {
   if (!timeStr) return "";
   return moment(timeStr, "HH:mm").format("h:mm A");
+};
+
+export const formatDate = (dateTimeStr) => {
+  return moment(dateTimeStr).format("ddd, MMM D");
+};
+
+export const formatPrice = (price) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  }).format(price);
 };

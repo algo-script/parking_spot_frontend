@@ -15,13 +15,18 @@ import UserProfile from "pages/UserProfile";
 import { getUserProfile } from "utils/helperFunctions";
 import ProtectedRoute from "utils/ProtectedRoute";
 import AuthModal from "pages/AuthModal";
-
+import GaurdDashboard from "pages/guard-dashboard/GuardDashboard";
+import Qrscan from "pages/guard-dashboard/Qrscan";
+import Bookingdetails from "pages/guard-dashboard/Bookingdetails";
+import Icon from "../src/components/AppIcon";
+import Admindashboard from "pages/admin-dashboard/Admindashboard";
+import UserData from "pages/admin-dashboard/Userdata";
 
 const Routes = () => {
-  const { token ,authModalOpen,setAuthModalOpen,authModalTab} = useContext(Mycontext);
+  const { token, authModalOpen, setAuthModalOpen, authModalTab, userRole } =
+    useContext(Mycontext);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  
 
   useEffect(() => {
     if (token) {
@@ -29,7 +34,6 @@ const Routes = () => {
     }
     setLoading(false);
   }, [token]);
-
 
   const fetchUserData = async () => {
     try {
@@ -44,7 +48,23 @@ const Routes = () => {
     }
   };
 
- 
+  // Component to render based on role for home route
+  const HomeRouteRenderer = () => {
+    if (!token) {
+      return <HomeSearchScreen />;
+    }
+
+    switch (userRole) {
+      case "Guard":
+        return <GaurdDashboard />;
+      case "Admin":
+        return <Admindashboard />;
+      case "User":
+      default:
+        return <HomeSearchScreen />;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -56,134 +76,167 @@ const Routes = () => {
 
   return (
     <BrowserRouter>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      {/* <ErrorBoundary> */}
-      <ScrollToTop />
-      <Header
-        userLoggedIn={token}
-        userName={user?.name}
-        userAvatar={user?.profileImage}
-      />
-       {authModalOpen && <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        initialTab={authModalTab}
-      />}
-       <RouterRoutes>
-      <Route path="/" element={<HomeSearchScreen />} />
-      <Route
-        path="/parking-spot-details/:id"
-        element={<ParkingSpotDetails />}
-      />
+      <ErrorBoundary>
+      <div className="flex flex-col min-h-screen">
+        {/* Fixed Header */}
+        <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm">
+          <Header
+            userLoggedIn={token}
+            userName={user?.name}
+            userAvatar={user?.profileImage}
+          />
+        </header>
+        <main className="flex-grow pt-16">
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+        
+          <ScrollToTop />
+          {authModalOpen && (
+            <AuthModal
+              isOpen={authModalOpen}
+              onClose={() => setAuthModalOpen(false)}
+              initialTab={authModalTab}
+            />
+          )}
+          <RouterRoutes>
+            <Route path="/" element={<HomeRouteRenderer />} />
+            <Route
+              path="/parking-spot-details/:id"
+              element={<ParkingSpotDetails />}
+            />
 
-      <Route
-        path="/my-parking-spots"
-        element={
-          <ProtectedRoute>
-            <MyParkingSpots />
-         </ProtectedRoute>
-        }
-      />
-       <Route
-        path="/my-booking"
-        element={
-          <ProtectedRoute>
-            <MyParkingSpots />
-         </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/add-parking-spot"
-        element={
-          <ProtectedRoute>
-            <AddParkingSpot />
-         </ProtectedRoute>
-        }
-      />
+            <Route
+              path="/my-parking-spots"
+              element={
+                <ProtectedRoute allowedRoles={["User"]}>
+                  <MyParkingSpots />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-booking"
+              element={
+                <ProtectedRoute allowedRoles={["User"]}>
+                  <MyParkingSpots />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-parking-spot"
+              element={
+                <ProtectedRoute allowedRoles={["User"]}>
+                  <AddParkingSpot />
+                </ProtectedRoute>
+              }
+            />
 
-      <Route
-        path="/user-profile/*"
-        element={
-          <ProtectedRoute>
-            <UserProfile user={user} fetchUserData={fetchUserData} />
-          </ProtectedRoute>
-        }
-      />
+            <Route
+              path="/user-profile/*"
+              element={
+                <ProtectedRoute allowedRoles={["User", "Guard","Admin"]}>
+                  <UserProfile user={user} fetchUserData={fetchUserData} />
+                </ProtectedRoute>
+              }
+            />
 
-      <Route path="*" element={<NotFound />} />
-    </RouterRoutes>
-      {/* </ErrorBoundary> */}
+            <Route
+              path="/qr-scanner"
+              element={
+                <ProtectedRoute allowedRoles={["Guard"]}>
+                  <Qrscan />
+                </ProtectedRoute>
+              }
+            />
+            {/* /booking-details */}
+            <Route
+              path="/booking-details"
+              element={
+                <ProtectedRoute allowedRoles={["Guard"]}>
+                  <Bookingdetails />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedRoles={["Admin"]}>
+               <UserData/>
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/parking-spots"
+              element={
+                <ProtectedRoute allowedRoles={["Admin"]}>
+                 <NotFound />
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/bookings"
+              element={
+                <ProtectedRoute allowedRoles={["Admin"]}>
+                  <NotFound />
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/vehicles"
+              element={
+                <ProtectedRoute allowedRoles={["Admin"]}>
+                 <NotFound />
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/guards"
+              element={
+                <ProtectedRoute allowedRoles={["Admin"]}>
+                  <NotFound />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="*" element={<NotFound />} />
+          </RouterRoutes>
+        </main>
+        <footer className="bg-white border-t border-gray-200 py-4">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="mb-4 md:mb-0">
+                <p className="text-gray-600 text-sm">
+                  &copy; {new Date().getFullYear()} ParkEase. All rights
+                  reserved.
+                </p>
+              </div>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-600 hover:text-primary">
+                  <Icon name="HelpCircle" size={20} />
+                </a>
+                <a href="#" className="text-gray-600 hover:text-primary">
+                  <Icon name="Settings" size={20} />
+                </a>
+                <a href="#" className="text-gray-600 hover:text-primary">
+                  <Icon name="Info" size={20} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 };
 
 export default Routes;
-
-
-// const ProjectRoutes = ({ user, fetchUserData }) => {
-//   return (
-//     <RouterRoutes>
-//       <Route path="/" element={<HomeSearchScreen />} />
-//       <Route
-//         path="/parking-spot-details/:id"
-//         element={<ParkingSpotDetails />}
-//       />
-
-//       {/* ✅ Protected Routes */}
-//       <Route
-//         path="/my-parking-spots"
-//         element={
-//           <ProtectedRoute>
-//             <MyParkingSpots />
-//           </ProtectedRoute>
-//         }
-//       />
-//       <Route
-//         path="/add-parking-spot"
-//         element={
-//           <ProtectedRoute>
-//             <AddParkingSpot />
-//           </ProtectedRoute>
-//         }
-//       />
-
-//       <Route
-//         path="/user-profile/*"
-//         element={
-//           <ProtectedRoute>
-//             <UserProfile user={user} fetchUserData={fetchUserData} />
-//           </ProtectedRoute>
-//         }
-//       />
-//       {/* <Route
-//         path="/user-profile"
-//         element={
-//           <ProtectedRoute>
-//             <UserProfile user={user} fetchUserData={fetchUserData} />
-//           </ProtectedRoute>
-//         }
-//       >
-//         <Route index element={<ProfileTab />} />
-//         <Route path="profile" element={<ProfileTab />} />
-//         <Route path="password" element={<PasswordTab />} />
-//         <Route path="vehicles" element={<VehiclesTabWrapper />} />
-//         <Route path="notifications" element={<NotificationsTab />} />
-//         <Route path="privacy" element={<PrivacyTab />} />
-//         <Route path="connections" element={<ConnectionsTab />} />
-//         <Route path="billing" element={<BillingTab />} />
-//       </Route> */}
-
-//       <Route path="*" element={<NotFound />} />
-//     </RouterRoutes>
-//   );
-// };

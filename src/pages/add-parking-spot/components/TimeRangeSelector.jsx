@@ -61,6 +61,8 @@ import React from "react";
 import Icon from "../../../components/AppIcon";
 
 const TimeRangeSelector = ({ selected, onChange }) => {
+  console.log("selected",selected);
+  
   const timeSlots = [
     {
       id: "morning",
@@ -87,6 +89,7 @@ const TimeRangeSelector = ({ selected, onChange }) => {
       icon: "Moon",
     }
   ];
+
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

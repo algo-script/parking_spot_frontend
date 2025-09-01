@@ -605,7 +605,7 @@
 //   );
 // };
 
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import BackButton from "./components/BackButton";
@@ -658,11 +658,31 @@ const AddParkingSpot = () => {
     },
   });
   const [formErrors, setFormErrors] = useState({});
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const { token } = useContext(Mycontext);
+  const suggestionsRef = useRef(null);
 
   const OLA_MAPS_API_KEY = "Qb1tCYd0ghxhAyc3s1pB4AouMSrYYR8bf5X34TPE"; 
-  console.log(formData);
+  console.log("formData",formData);
+  console.log("isInputFocused",isInputFocused);
   
+  // console.log();
+  
+  
+
+   // Close suggestions when clicking outside
+   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+        setIsInputFocused(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Fetch user's current location on component mount
   useEffect(() => {
@@ -777,6 +797,7 @@ const AddParkingSpot = () => {
           latitude: lat,
           longitude: lng,
         });
+        setIsInputFocused(false);
       }
     } catch (error) {
       console.error("Error fetching place details:", error);
@@ -792,12 +813,35 @@ const AddParkingSpot = () => {
     }));
   };
 
+  const handleFocus = () => {
+    setIsInputFocused(true);
+  };
+
+  const handleBlur = () => {
+    // Use setTimeout to allow click event to register before hiding
+    setTimeout(() => {
+      setIsInputFocused(false);
+    }, 200);
+  };
+
+  // const handleTimeAvailabilityChange = (timeSlot) => {
+  //   setFormData({
+  //     ...formData,
+  //     timeAvailability: {
+  //       ...formData.timeAvailability,
+  //       [timeSlot]: !formData.timeAvailability[timeSlot],
+  //     },
+  //   });
+  // };
   const handleTimeAvailabilityChange = (timeSlot) => {
+    console.log("timeSlot",timeSlot)
     setFormData({
       ...formData,
       timeAvailability: {
-        ...formData.timeAvailability,
-        [timeSlot]: !formData.timeAvailability[timeSlot],
+        morning: timeSlot === "morning",
+        afternoon: timeSlot === "afternoon",
+        evening: timeSlot === "evening",
+        night: timeSlot === "night",
       },
     });
   };
@@ -1049,18 +1093,20 @@ const AddParkingSpot = () => {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Location
                 </h2>
-                <div className="mb-4 relative">
+                <div className="mb-4 relative" ref={suggestionsRef}>
                   <FormInput
                     label="Address"
                     name="address"
                     value={formData.address}
                     onChange={handleAddressChange}
                     placeholder="Start typing your address..."
+                    onFocus={handleFocus}
+                    // onBlur={handleBlur}
                     error={formErrors.address}
                     icon="MapPin"
                     required
                   />
-                  {formData.addressSuggestions.length > 0 && (
+                  {isInputFocused && formData.addressSuggestions.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                       {formData.addressSuggestions.map((suggestion) => (
                         <button
@@ -1363,13 +1409,13 @@ const AddParkingSpot = () => {
           </form>
         </div>
       </main>
-      <footer className="bg-white border-t border-gray-200 py-6">
+      {/* <footer className="bg-white border-t border-gray-200 py-6">
         <div className="container mx-auto px-4">
           <p className="text-center text-gray-500 text-sm">
             © {new Date().getFullYear()} ParkEase. All rights reserved.
           </p>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 };

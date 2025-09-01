@@ -13,33 +13,44 @@ import {
   updateParkingSpotTimeAvailability,
 } from "utils/helperFunctions";
 import { toast } from "react-toastify";
+import GaurdDetail from "./components/GaurdDetail";
 
 const MyParkingSpots = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [userType, setUserType] = useState(location.pathname === "/my-parking-spots" ? "owner" : "renter");
+  const [userType, setUserType] = useState(
+    location.pathname === "/my-parking-spots" ? "owner" : "renter"
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [ownerSpots, setOwnerSpots] = useState([]);
   const [renterBookings, setRenterBookings] = useState([]);
-  const { token } = useContext(Mycontext);
+  const [showGuardPopup, setShowGuardPopup] = useState(false);
+  const [spotDetails,setSpotDetails] = useState(null)
+  const [guardDetail,setGuardDetail] =  useState(null)
+  const [isEditGuard,setisEditGuard] = useState(false)
+
+
+  useEffect(() => {
+    setUserType(location.pathname === "/my-parking-spots" ? "owner" : "renter");
+  }, [location.pathname]);
   
+  useEffect(() => {
+    fetchData();
+  }, [userType]);
 
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      if(userType==="owner"){
-        const spotsResponse = await getMyParkingSpot();    
+      if (userType === "owner") {
+        const spotsResponse = await getMyParkingSpot();
         setOwnerSpots(spotsResponse.data);
-      }else{
-      const bookingResponse = await getuserBooking()
-      setRenterBookings(bookingResponse.data); 
+      } else {
+        const bookingResponse = await getuserBooking();
+        setRenterBookings(bookingResponse.data);
       }
-    
-     
     } catch (err) {
       setError(
         err.response?.data?.error ||
@@ -49,22 +60,13 @@ const MyParkingSpots = () => {
       setIsLoading(false);
     }
   };
-  useEffect(()=>{
-    setUserType(location.pathname === "/my-parking-spots" ? "owner" : "renter")
-},[location.pathname])
-  useEffect(() => {
-    fetchData();
-  }, [userType]);
- 
 
-  const handleRefresh =  () => {
+  const handleRefresh = () => {
     if (isRefreshing) return;
-
     setIsRefreshing(true);
     setError(null);
-
     try {
-      fetchData()
+      fetchData();
     } catch (err) {
       setError(
         err.response?.data?.error || "Failed to refresh data. Please try again."
@@ -72,13 +74,13 @@ const MyParkingSpots = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }
+  };
 
   const handleTabChange = (newUserType) => {
     if (newUserType !== userType) {
       setUserType(newUserType);
-      // Navigate to the appropriate route based on the new userType
-      const newPath = newUserType === "owner" ? "/my-parking-spots" : "/my-booking";
+      const newPath =
+        newUserType === "owner" ? "/my-parking-spots" : "/my-booking";
       if (location.pathname !== newPath) {
         navigate(newPath);
       }
@@ -87,9 +89,9 @@ const MyParkingSpots = () => {
 
   const handleToggleAvailability = async (spotId, isAvailable) => {
     try {
-      const response = await toggleAvailability({spotId, isAvailable})
-      if(response.status){
-        toast.success(response.message)
+      const response = await toggleAvailability({ spotId, isAvailable });
+      if (response.status) {
+        toast.success(response.message);
         setOwnerSpots((prevSpots) =>
           prevSpots.map((spot) =>
             spot._id === spotId ? { ...spot, isAvailable } : spot
@@ -102,8 +104,7 @@ const MyParkingSpots = () => {
           "Failed to update parking spot availability."
       );
     }
-  }
-
+  };
 
   const handleUpdateTimeWindow = async (spotId, start, end) => {
     try {
@@ -112,8 +113,8 @@ const MyParkingSpots = () => {
         console.error("Spot not found");
         return;
       }
-      const currentStart = currentSpot.timeAvailability.start
-      const currentEnd = currentSpot.timeAvailability.end
+      const currentStart = currentSpot.timeAvailability.start;
+      const currentEnd = currentSpot.timeAvailability.end;
       if (currentStart === start && currentEnd === end) {
         return;
       }
@@ -124,43 +125,57 @@ const MyParkingSpots = () => {
         end,
       });
       if (response.status) {
-      // Update local state with new time availability
-      setOwnerSpots(prevSpots =>
-        prevSpots.map(spot =>
-          spot._id === spotId
-            ? {
-                ...spot,
-                timeAvailability: {
-                  ...spot.timeAvailability,
-                  start: start,
-                  end: end
+        setOwnerSpots((prevSpots) =>
+          prevSpots.map((spot) =>
+            spot._id === spotId
+              ? {
+                  ...spot,
+                  timeAvailability: {
+                    ...spot.timeAvailability,
+                    start: start,
+                    end: end,
+                  },
                 }
-              }
-            : spot
-        )
-      );
+              : spot
+          )
+        );
       }
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError(
         err.response?.data?.error || "Failed to update time availability."
       );
     }
   };
 
+  const hadleshowGaurdpopup = (spot) =>{
+    setShowGuardPopup(true)
+    setSpotDetails(spot)
+    setisEditGuard(false)
+  }
+
+  const handleEditGuard =(guard)=>{
+    setShowGuardPopup(true)
+    setGuardDetail(guard)
+    setisEditGuard(true)
+  }
+
+  const handleCloseGaurdPopup = ()=>{
+    setShowGuardPopup(false)
+    setSpotDetails(null)
+    setisEditGuard(false)
+  }
 
   const handleCancelBooking = async (bookingId) => {
     try {
-      const response = await cancelBooking(bookingId)
+      const response = await cancelBooking(bookingId);
       if (response.success) {
         toast.error(response.message);
-        fetchData(); 
+        fetchData();
       }
     } catch (error) {
       console.error("Cancellation failed:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to cancel booking"
-      );
+      toast.error(error.response?.data?.message || "Failed to cancel booking");
     }
   };
 
@@ -176,6 +191,8 @@ const MyParkingSpots = () => {
     if (isRefreshing) return;
     handleRefresh();
   };
+
+
 
   const renderContent = () => {
     if (isLoading) {
@@ -227,7 +244,8 @@ const MyParkingSpots = () => {
               userType="owner"
               onToggleAvailability={handleToggleAvailability}
               onUpdateTimeWindow={handleUpdateTimeWindow}
-             
+              onAddGaurdDetails={hadleshowGaurdpopup}
+              onEditGuard={handleEditGuard}
             />
           ))}
         </div>
@@ -254,7 +272,7 @@ const MyParkingSpots = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">My Parking Spots</h1>
           <button
@@ -293,7 +311,16 @@ const MyParkingSpots = () => {
             </button>
           </div>
         )}
-      </main>
+      </div>
+      {showGuardPopup && (
+         <GaurdDetail
+         onClose={handleCloseGaurdPopup}
+         spotDetails={spotDetails}
+         guardDetail={guardDetail}
+         isEditGuard={isEditGuard}
+         onSuccess={()=>fetchData()}
+         />
+      )}
     </div>
   );
 };

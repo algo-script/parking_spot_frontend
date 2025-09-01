@@ -2,8 +2,6 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
-import Input from './Input';
-import AuthModal from 'pages/AuthModal';
 import { Mycontext } from '../../context/context';
 
 
@@ -14,15 +12,18 @@ const Header = ({
   userAvatar ,
   className = '',
 }) => {
-  const { token,setToken,openSignUpModal, openSignInModal} = useContext(Mycontext);
+  const { token,setToken,openSignUpModal, openSignInModal,userRole} = useContext(Mycontext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
- 
   const location = useLocation();
   const navigate = useNavigate();
   const mobileMenuRef = useRef(null);
   const userMenuRef = useRef(null);
+  // console.log("userRole",userRole);
+  // console.log(isMenuOpen,isUserMenuOpen);
+  
+  
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -69,6 +70,8 @@ const Header = ({
 
   const handleLogout = () => {
     setToken(null);
+    setIsMenuOpen(false);
+    setIsUserMenuOpen(false);
   };
 
   const navigateToProfile = () =>{  
@@ -92,7 +95,6 @@ const Header = ({
   }, []);
 
   useEffect(() => {
-    // Close menus when location changes
     setIsMenuOpen(false);
     setIsUserMenuOpen(false);
   }, [location]);
@@ -106,14 +108,7 @@ const Header = ({
     setIsUserMenuOpen(!isUserMenuOpen);
     if (isMenuOpen) setIsMenuOpen(false);
   };
-
-
-  const isTransparent = variant === 'transparent';
-  const isCompact = variant === 'compact';
-
-  const baseClasses = `w-full z-50 ${isCompact ? 'py-2' : 'py-4'}`;
-  const variantClasses = isTransparent
-    ? 'bg-transparent text-white' : 'bg-white shadow-md text-gray-900';
+  
   // Base nav items that are always visible
   const baseNavItems = [
     { name: 'Find Parking', path: '/', icon: 'Search' }
@@ -125,13 +120,31 @@ const Header = ({
     { name: 'Add Spot', path: '/add-parking-spot', icon: 'Plus' },
   ];
 
-  // Combine nav items based on authentication status
   const navItems = token ? [...baseNavItems, ...authNavItems] : baseNavItems;
-  // const navItems = [
-  //   { name: 'Find Parking', path: '/', icon: 'Search' },
-  //   { name: 'My Spots', path: '/my-parking-spots', icon: 'ParkingCircle' },
-  //   { name: 'Add Spot', path: '/add-parking-spot', icon: 'Plus' },
-  // ];
+  // Nav items for guards
+  const guardNavItems = [
+    { name: 'Spot Details', path: '/', icon: 'Shield' },
+    { name: 'Spot Bookings', path: '/booking-details', icon: 'Calendar' },
+    { name: 'QR Scanner', path: '/qr-scanner', icon: 'QrCode' },
+  ];
+
+  const adminNavItems = [
+    { name: 'Users', path: '/users', icon: 'People' },
+    // { name: 'Parking Spots', path: '/parking-spots', icon: 'ParkingCircle' },
+    // { name: 'Bookings', path: '/bookings', icon: 'Calendar' },
+    // { name: 'Vehicles', path: '/vehicles', icon: 'DirectionsCar' },
+    { name: 'Guards', path: '/guards', icon: 'Shield' },
+  ];
+
+  // Determine which nav items to show based on role
+  let roleNavItems = [];
+  if (userRole === 'Admin') {
+    roleNavItems = adminNavItems;
+  }else if (userRole === 'User') {
+    roleNavItems = navItems;
+  } else if (userRole === 'Guard') {
+    roleNavItems = guardNavItems;
+  }
 
   const userMenuItems = [
     { name: 'Profile', icon: 'User', action:navigateToProfile },
@@ -140,9 +153,31 @@ const Header = ({
     { name: 'Logout', icon: 'LogOut', action: handleLogout },
   ];
 
+  const guardMenuItems = [
+    { name: 'Profile', icon: 'User', action: navigateToProfile },
+    { name: 'Logout', icon: 'LogOut', action: handleLogout },
+  ];
+
+  const adminMenuItems = [
+    { name: 'Profile', icon: 'User', action:navigateToProfile },
+    { name: 'Settings', icon: 'Settings', action: () => { }},
+    { name: 'Logout', icon: 'LogOut', action: handleLogout },
+  ];
+
+  let menuItems = [];
+
+  if (userRole === "Guard") {
+    menuItems = guardMenuItems;
+  } else if (userRole === "Admin") {
+    menuItems = adminMenuItems;
+  } else {
+    menuItems = userMenuItems; // Default for normal users
+  }
+  
+
   const renderLogo = () => (
     <Link to="/" className="flex items-center">
-      <div className={`font-display font-bold text-2xl ${isTransparent ? 'text-white' : 'text-primary'}`}>
+      <div className={`font-display font-bold text-2xl text-primary`}>
         ParkEase
       </div>
     </Link>
@@ -150,12 +185,12 @@ const Header = ({
 
   const renderDesktopNav = () => (
     <div className="hidden md:flex items-center space-x-6">
-      {navItems.map((item) => (
+      {roleNavItems.map((item) => (
         <Link
           key={item.name}
           to={item.path}
           className={`flex items-center text-sm font-medium hover:text-primary ${location.pathname === item.path
-              ? isTransparent ? 'text-white font-semibold' : 'text-primary' : isTransparent ? 'text-white text-opacity-90' : 'text-gray-700'
+              ?  'text-primary' : 'text-gray-700'
             }`}
         >
           <Icon name={item.icon} size={16} className="mr-1" />
@@ -181,7 +216,7 @@ const Header = ({
         </div>
         <nav className="flex-1 px-4 pb-4">
           <ul className="space-y-4">
-            {navItems.map((item) => (
+            {roleNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   to={item.path}
@@ -234,19 +269,19 @@ const Header = ({
         aria-haspopup="true"
       >
         {renderAvatar()}
-        <span className={`ml-2 ${isTransparent ? 'text-white' : 'text-gray-700'} hidden sm:block`}>
+        <span className={`ml-2  text-gray-700 hidden sm:block`}>
           {userName}
         </span>
         <Icon
           name={isUserMenuOpen ? "ChevronUp" : "ChevronDown"}
           size={16}
-          className={`ml-1 ${isTransparent ? 'text-white' : 'text-gray-500'}`}
+          className={`ml-1 'text-gray-500'`}
         />
       </button>
 
       {isUserMenuOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-          {userMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <button
               key={item.name}
               onClick={item.action}
@@ -273,7 +308,7 @@ const Header = ({
                 onClick={toggleMenu}
                 aria-label="Open menu"
               >
-                <Icon name="Menu" size={24} className={isTransparent ? 'text-white' : 'text-gray-700'} />
+                <Icon name="Menu" size={24} className='text-gray-700' />
               </button>
               {renderLogo()}
             </div>
@@ -286,15 +321,15 @@ const Header = ({
               ) : (
                 <div className="flex items-center space-x-2">
                   <Button
-                    variant={isTransparent ? "outline" : "secondary"}
+                    variant={"secondary"}
                     size="sm"
-                    className={isTransparent ? "border-white text-white hover:bg-white hover:bg-opacity-10" : ""}
+                    // className={isTransparent ? "border-white text-white hover:bg-white hover:bg-opacity-10" : ""}
                     onClick={openSignInModal}
                   >
                     Sign In
                   </Button>
                   <Button
-                    variant={isTransparent ? "primary" : "primary"}
+                    variant="primary"
                     size="sm"
                     onClick={openSignUpModal}
                   >

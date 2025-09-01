@@ -1,35 +1,48 @@
 import React, { useState, useEffect } from "react";
 import Icon from "../../../components/AppIcon";
+import moment from "moment";
 
 const TimeSelector = ({ startTime, endTime, onTimeChange }) => {
-  const [start, setStart] = useState(startTime || "08:00");
-  const [end, setEnd] = useState(endTime || "18:00");
-  console.log("start",start)
-  console.log("end",end)
+  const [start, setStart] = useState(startTime);
+  const [end, setEnd] = useState(endTime);
+  
   
   // Generate time options in 30-minute increments
+  // const generateTimeOptions = () => {
+  //   const options = [];
+  //   for (let hour = 0; hour < 24; hour++) {
+  //     for (let minute of [0, 30]) {
+  //       const formattedHour = hour.toString().padStart(2, '0');
+  //       const formattedMinute = minute.toString().padStart(2, '0');
+  //       const value = `${formattedHour}:${formattedMinute}`;
+        
+  //       const date = new Date();
+  //       date.setHours(hour);
+  //       date.setMinutes(minute);
+  //       const label = date.toLocaleTimeString('en-US', {
+  //         hour: 'numeric',
+  //         minute: '2-digit',
+  //         hour12: true
+  //       });
+        
+  //       options.push({ value, label });
+  //     }
+  //   }
+  //   return options;
+  // };
   const generateTimeOptions = () => {
     const options = [];
     for (let hour = 0; hour < 24; hour++) {
-      for (let minute of [0, 30]) {
-        const formattedHour = hour.toString().padStart(2, '0');
-        const formattedMinute = minute.toString().padStart(2, '0');
-        const value = `${formattedHour}:${formattedMinute}`;
-        
-        const date = new Date();
-        date.setHours(hour);
-        date.setMinutes(minute);
-        const label = date.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-        
-        options.push({ value, label });
-      }
+        for (let minute of [0, 30]) {
+            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            const value = timeString;
+            const label = moment(timeString, 'HH:mm').format('h:mm A');
+            options.push({ value, label });
+        }
     }
     return options;
-  };
+};
+
   
   const timeOptions = generateTimeOptions();
   
@@ -47,7 +60,6 @@ const TimeSelector = ({ startTime, endTime, onTimeChange }) => {
     
     // Ensure end time is after start time
     if (newStart >= end) {
-      // Find the next time slot
       const startIndex = timeOptions.findIndex(option => option.value === newStart);
       if (startIndex < timeOptions.length - 1) {
         setEnd(timeOptions[startIndex + 1].value);
@@ -62,7 +74,6 @@ const TimeSelector = ({ startTime, endTime, onTimeChange }) => {
     
     // Ensure start time is before end time
     if (newEnd <= start) {
-      // Find the previous time slot
       const endIndex = timeOptions.findIndex(option => option.value === newEnd);
       if (endIndex > 0) {
         setStart(timeOptions[endIndex - 1].value);

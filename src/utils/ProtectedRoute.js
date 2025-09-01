@@ -3,21 +3,22 @@ import { Mycontext } from 'context/context';
 import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
-  const { token } = useContext(Mycontext);
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { token, userRole } = useContext(Mycontext);
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     if (!token) {
       navigate("/", { replace: true });
+    } else if (allowedRoles && !allowedRoles.includes(userRole)) {
+      navigate("/", { replace: true }); 
     }
-  }, [token, navigate]);
+  }, [token, userRole, allowedRoles, navigate]);
 
-  if (!token) {
-    return null; // or a loading spinner while the redirect happens
-  }
+  if (!token) return null; 
 
   return children;
 };
+
 
 export default ProtectedRoute;

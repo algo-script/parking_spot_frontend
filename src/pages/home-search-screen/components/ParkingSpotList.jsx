@@ -6,38 +6,9 @@ import { formatTimeString } from "utils/helperFunctions";
 const ParkingSpotList = ({ 
   spots, 
   isLoading, 
-  // selectedSpot, 
-  // onSpotSelect, 
   onSpotClick 
 }) => {
 
-  // console.log("spots",spots ) 
-  // Format time string to AM/PM format
-  // const formatTime = (timeString) => {
-  //   if (!timeString) return "";
-    
-  //   try {
-  //     const [hours, minutes] = timeString.split(":");
-  //     const hour = parseInt(hours, 10);
-  //     const period = hour >= 12 ? "PM" : "AM";
-  //     const displayHour = hour % 12 || 12;
-  //     return `${displayHour}:${minutes} ${period}`;
-  //   } catch (e) {
-  //     return timeString;
-  //   }
-  // };
-  // const formatDateTime = (isoString) => {
-  //   if (!isoString) return "";
-  //   const date = new Date(isoString);
-  //   return date.toLocaleString("en-IN", {
-  //     day: "2-digit",
-  //     month: "short",
-  //     year: "numeric",
-  //     hour: "2-digit",
-  //     minute: "2-digit",
-  //     hour12: true,
-  //   });
-  // };
 
   // Render loading skeletons
   if (isLoading) {
@@ -105,25 +76,16 @@ const ParkingSpotList = ({
       
       <div className="overflow-y-auto h-[calc(500px-60px)]">
         {spots.map((spot) => {
-          // const isSelected = selectedSpot && selectedSpot.id === spot.id;
           
           return (
             <div 
               key={spot._id}
               className={`p-4 border-b border-gray-200 cursor-pointer transition-colors duration-200  hover:bg-gray-50`}
               onClick={() => {
-                // onSpotSelect(spot);
                 onSpotClick(spot._id);
               }}
               tabIndex={0}
               role="button"
-              // aria-pressed={isSelected}
-              // onKeyDown={(e) => {
-              //   if (e.key === 'Enter' || e.key === ' ') {
-              //     onSpotSelect(spot);
-              //     onSpotClick(spot.id);
-              //   }
-              // }}
             >
               <div className="flex">
                 <div className="w-20 h-20 bg-gray-200 rounded-md mr-3 overflow-hidden">
@@ -154,12 +116,12 @@ const ParkingSpotList = ({
                     {formatTimeString(spot.timeAvailability.start)} - {formatTimeString(spot.timeAvailability.end)}
                   </p>
                   
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center">
+                  <div className="flex items-center justify-end mt-2">
+                    {/* <div className="flex items-center">
                       <Icon name="Star" size={14} className="text-yellow-400 mr-1" />
                       <span className="text-sm font-medium">{spot.rating}</span>
                       <span className="text-sm text-gray-500 ml-1">({spot.totalReviews})</span>
-                    </div>
+                    </div> */}
                     
                     <div className="text-lg font-semibold text-primary">
                       ${spot.hourlyRate}/hr
@@ -167,32 +129,6 @@ const ParkingSpotList = ({
                   </div>
                 </div>
               </div>
-{/*               
-              {isSelected && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {spot.amenities.map((amenity, index) => (
-                      <span 
-                        key={index}
-                        className="inline-flex items-center bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-md"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  <button
-                    className="w-full py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors duration-200 flex items-center justify-center"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSpotClick(spot.id);
-                    }}
-                  >
-                    <span>View Details</span>
-                    <Icon name="ArrowRight" size={16} className="ml-1" />
-                  </button>
-                </div>
-              )} */}
             </div>
           );
         })}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Icon from "../../components/AppIcon";
 import { Link, useLocation } from "react-router-dom";
 import ProfileTab from "./components/ProfileTab";
@@ -8,12 +8,15 @@ import NotificationsTab from "./components/NotificationsTab";
 import PrivacyTab from "./components/PrivacyTab";
 import ConnectionsTab from "./components/ConnectionsTab";
 import BillingTab from "./components/BillingTab";
+import { Mycontext } from "context/context";
 
 const UserProfile = ({ user, fetchUserData }) => {
  
  
   const location = useLocation();
   const currentPath = location.pathname.split("/").pop() || "profile"; 
+  const {userRole} =useContext(Mycontext)
+
 
   // Map currentPath to the corresponding component
   const renderTabContent = () => {
@@ -47,14 +50,16 @@ const UserProfile = ({ user, fetchUserData }) => {
     }
   };
   const navItems = [
-    { path: "profile", icon: "User", label: "Profile Information" },
-    { path: "password", icon: "Lock", label: "Change Password" },
-    { path: "vehicles", icon: "Car", label: "Vehicle Details" },
-    { path: "notifications", icon: "Bell", label: "Notifications" },
-    { path: "privacy", icon: "Shield", label: "Privacy Settings" },
-    { path: "connections", icon: "Link", label: "Connected Accounts" },
-    { path: "billing", icon: "CreditCard", label: "Billing & Payments" },
+    { path: "profile", icon: "User", label: "Profile Information",roles: ["Admin", "User", "Guard"] },
+    { path: "password", icon: "Lock", label: "Change Password",roles: [ "User", "Guard"] },
+    { path: "vehicles", icon: "Car", label: "Vehicle Details",roles: [ "User"] },
+    // { path: "notifications", icon: "Bell", label: "Notifications" },
+    // { path: "privacy", icon: "Shield", label: "Privacy Settings" },
+    // { path: "connections", icon: "Link", label: "Connected Accounts" },
+    // { path: "billing", icon: "CreditCard", label: "Billing & Payments" },
   ];
+
+  const allowedNavItems = navItems.filter(item => item.roles.includes(userRole));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -62,7 +67,7 @@ const UserProfile = ({ user, fetchUserData }) => {
        <div className="flex flex-col sm:flex-row gap-6 max-w-6xl mx-auto">
       <div className="w-full bg-white sm:w-64 rounded-lg shadow-sm border border-gray-200 p-2 md:p-4 h-fit ">
         <div className="flex flex-row sm:flex-col justify-between space-y-1 overflow-x-auto sm:overflow-visible">
-          {navItems.map((item) => (
+          {allowedNavItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
