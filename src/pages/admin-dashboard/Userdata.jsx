@@ -50,8 +50,8 @@ const UserData = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
-    itemsPerPage: 5,
-    totalItems: 0,
+    itemsPerPage: 15,
+    totalItems: 0,  
     totalPages: 0,
   });
 
@@ -73,7 +73,7 @@ const UserData = () => {
     filters.dateTo,
   ]);
 
-  const fetchUserData = useCallback(async () => {
+  const fetchUserData = async() => {
     try {
       setLoading(true);
 
@@ -107,7 +107,7 @@ const UserData = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.currentPage, pagination.itemsPerPage]);
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -157,7 +157,7 @@ const UserData = () => {
           </div>
           <div className="mt-4 sm:mt-0 flex items-center space-x-3">
             <button
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => {setShowFilters(!showFilters);clearFilters()}}
               className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             >
               <Filter className="w-4 h-4 mr-2" />
@@ -238,6 +238,7 @@ const UserData = () => {
                   <input
                     type="date"
                     name="dateFrom"
+                    max={new Date().toISOString().split("T")[0]}
                     value={filters.dateFrom}
                     onChange={handleFilterChange}
                     className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -257,6 +258,8 @@ const UserData = () => {
                     type="date"
                     name="dateTo"
                     value={filters.dateTo}
+                    max={new Date().toISOString().split("T")[0]}
+                    disabled={!filters.dateFrom}
                     onChange={handleFilterChange}
                     className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -327,12 +330,12 @@ const UserData = () => {
                     >
                       Created
                     </th>
-                    <th
+                    {/* <th
                       scope="col"
                       className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       Actions
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -342,19 +345,32 @@ const UserData = () => {
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                            <span className="text-white font-medium">
-                              {user.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.name}
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          {user.profileImage ? (
+                            <img
+                              className="h-10 w-10 rounded-full object-cover shadow-sm"
+                              src={`${import.meta.env.VITE_APP_BASE_URL}/${user.profileImage}`}
+                              alt={user.name}
+                            />
+                          ) : (
+                            <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-full h-10 w-10 flex items-center justify-center shadow-sm">
+                              <span className="text-white font-medium">
+                                {user.name.charAt(0).toUpperCase()}
+                              </span>
                             </div>
-                          </div>
+                          )}
                         </div>
-                      </td>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.name}
+                          </div>
+                          {/* <div className="text-xs text-gray-500">
+                            {user.addedBy}
+                          </div> */}
+                        </div>
+                      </div>
+                    </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {user.email}
@@ -367,7 +383,7 @@ const UserData = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {moment(user.createdAt).format("MMM D, YYYY")}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50 transition-colors">
                             <Edit className="w-5 h-5" />
@@ -376,7 +392,7 @@ const UserData = () => {
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
@@ -424,227 +440,3 @@ const UserData = () => {
 
 export default UserData;
 
-{
-  /* <div className="hidden md:block">
-              <select
-                value={pagination.itemsPerPage}
-                onChange={handleItemsPerPageChange}
-                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="5">5 per page</option>
-                <option value="10">10 per page</option>
-                <option value="25">25 per page</option>
-                <option value="50">50 per page</option>
-              </select>
-            </div> */
-}
-
-{
-  /* <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="rounded-lg bg-green-100 p-3">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h2 className="text-2xl font-bold text-gray-900">{(pagination.totalItems - 12)}</h2>
-                <p className="text-sm text-gray-500">Active Users</p>
-              </div>
-            </div>
-          </div> */
-}
-
-{
-  /* <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="rounded-lg bg-amber-100 p-3">
-                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h2 className="text-2xl font-bold text-gray-900">12</h2>
-                <p className="text-sm text-gray-500">Pending</p>
-              </div>
-            </div>
-          </div> */
-}
-
-{
-  /* <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="rounded-lg bg-red-100 p-3">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h2 className="text-2xl font-bold text-gray-900">5</h2>
-                <p className="text-sm text-gray-500">Suspended</p>
-              </div>
-            </div>
-          </div> */
-}
-
-{
-  /* <div className="mt-2 sm:mt-0">
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  name="table-search"
-                  placeholder="Quick search..."
-                  className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm"
-                />
-              </div>
-            </div> */
-}
-
-{
-  /* <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                          {user.addedBy}
-                        </div>
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${user.status === 'active' 
-                                ? 'bg-green-100 text-green-800' 
-                                : user.status === 'pending'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800'}`}>
-                          {user.status || 'active'}
-                        </span>
-                      </td> */
-}
- {/* {pagination.totalItems > 0 && pagination.totalPages > 1 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
-            <div className="flex-1 flex justify-between items-center sm:hidden">
-              <button
-                onClick={() => handlePageChange(pagination.currentPage - 1)}
-                disabled={pagination.currentPage === 1}
-                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  pagination.currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-700">
-                Page{" "}
-                <span className="font-medium">{pagination.currentPage}</span> of{" "}
-                <span className="font-medium">{pagination.totalPages}</span>
-              </span>
-              <button
-                onClick={() => handlePageChange(pagination.currentPage + 1)}
-                disabled={pagination.currentPage === pagination.totalPages}
-                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  pagination.currentPage === pagination.totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                Next
-              </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing{" "}
-                  <span className="font-medium">
-                    {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-medium">
-                    {Math.min(
-                      pagination.currentPage * pagination.itemsPerPage,
-                      pagination.totalItems
-                    )}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-medium">{pagination.totalItems}</span>{" "}
-                  results
-                </p>
-              </div>
-              <div>
-                <nav
-                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                  aria-label="Pagination"
-                >
-                  <button
-                    onClick={() => handlePageChange(pagination.currentPage - 1)}
-                    disabled={pagination.currentPage === 1}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${
-                      pagination.currentPage === 1
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-white text-gray-500 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="sr-only">Previous</span>
-                    <svg
-                      className="h-5 w-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M12.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L9.414 10l3.293 3.293a1 1 0 010 1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {getPageNumbers().map((page, index) => (
-                    <button
-                      key={index}
-                      onClick={() =>
-                        typeof page === "number" ? handlePageChange(page) : null
-                      }
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        page === pagination.currentPage
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : page === "..."
-                          ? "bg-white border-gray-300 text-gray-500 cursor-default"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                      }`}
-                      disabled={page === "..."}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => handlePageChange(pagination.currentPage + 1)}
-                    disabled={pagination.currentPage === pagination.totalPages}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${
-                      pagination.currentPage === pagination.totalPages
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-white text-gray-500 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="sr-only">Next</span>
-                    <svg
-                      className="h-5 w-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
-        )} */}

@@ -22,13 +22,13 @@ const HomeSearchScreen = () => {
     maxPrice: 50,
     selectedDate:""
   });
-  const { token } = useContext(Mycontext);
+  const { token,country } = useContext(Mycontext);
+
  
   // Simulate fetching user location and parking spots
   useEffect(() => {
     const fetchUserLocation = () => {  
       if (navigator.geolocation) {
-        console.log("navigator.geolocation",navigator.geolocation);
         navigator.geolocation.getCurrentPosition(
           (position) => {
             setUserLocation({
@@ -39,18 +39,14 @@ const HomeSearchScreen = () => {
           },
           () => {          
             setLocationError(true);
-            // Default location if geolocation fails
             setUserLocation({ lat: 37.7749, lng: -122.4194 });
           }
         );
       } else {
         setLocationError(true);
-        // Default location if geolocation not supported
         setUserLocation({ lat: 37.7749, lng: -122.4194 });
       }
     };
-
-   
 
     fetchUserLocation();
   }, [token]);
@@ -78,9 +74,11 @@ const HomeSearchScreen = () => {
         console.error("Error fetching parking spots:", error);
       }
     };
-  
-    fetchData();
-  },[userLocation,searchLocation,filters,token])
+    if(country){
+      fetchData();
+    }
+    
+  },[userLocation,searchLocation,filters,country])
 
 
   // Handle search query changes
@@ -95,8 +93,6 @@ const HomeSearchScreen = () => {
 
   // Handle spot click to navigate to details
   const handleSpotClick = (spot) => {
-    console.log("spot",spot);
-    
     navigate(`/parking-spot-details/${spot}`);
   };
 

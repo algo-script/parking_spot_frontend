@@ -30,10 +30,12 @@ const OwnerInfo = ({ owner }) => {
           </div>
           <span className="text-gray-600 text-sm ml-2">{owner.rating} ({owner.reviewCount} reviews)</span>
         </div> */}
+        {owner?.responseTime && (
         <div className="flex items-center mt-1 text-sm text-gray-600">
           <Icon name="Clock" size={14} className="mr-1" />
           <span>Responds {owner.responseTime}</span>
         </div>
+        )}
       </div>
     </div>
   );

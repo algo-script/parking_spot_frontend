@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import Icon from '../AppIcon';
-import Button from './Button';
-import { Mycontext } from '../../context/context';
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import Icon from "../AppIcon";
+import Button from "./Button";
+import { Mycontext } from "../../context/context";
+import AuthModal from "pages/AuthModal";
+import { ModelContext } from "context/modelcontext";
 
 
-const Header = ({
-  variant = 'default',
-  userLoggedIn = false,
-  userName = 'User',
-  userAvatar ,
-  className = '',
-}) => {
-  const { token,setToken,openSignUpModal, openSignInModal,userRole} = useContext(Mycontext);
+const Header = ({ userLoggedIn }) => {
+  const { token, setToken, userRole ,user} = useContext(Mycontext);
+  const {authModalOpen,authModalTab,openSignUpModal,openSignInModal,setAuthModalOpen} = useContext(ModelContext)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -20,67 +17,30 @@ const Header = ({
   const navigate = useNavigate();
   const mobileMenuRef = useRef(null);
   const userMenuRef = useRef(null);
-  // console.log("userRole",userRole);
-  // console.log(isMenuOpen,isUserMenuOpen);
-  
-  
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+      if (
+        isMenuOpen &&
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target)
+      ) {
         setIsMenuOpen(false);
       }
-      if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+      if (
+        isUserMenuOpen &&
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target)
+      ) {
         setIsUserMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isMenuOpen, isUserMenuOpen]);
-  
-  // Fallback avatar component
-  const renderAvatar = (size = 8) => {
-    if (userAvatar) {
-      return (
-        <img
-          src={`${import.meta.env.VITE_APP_BASE_URL}/${userAvatar}`}
-          alt={userName}
-          className={`w-${size} h-${size} rounded-full`}
-          onError={(e) => {
-            e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'block';
-          }}
-        />
-      );
-    }
-    return (
-      <div 
-        className={`w-${size} h-${size} rounded-full bg-gray-200 flex items-center justify-center`}
-        style={{ display: userAvatar ? 'none' : 'flex' }}
-      >
-        <Icon name="User" size={size === 8 ? 16 : 20} className="text-gray-500" />
-      </div>
-    );
-  };
-
-  
-
-  const handleLogout = () => {
-    setToken(null);
-    setIsMenuOpen(false);
-    setIsUserMenuOpen(false);
-  };
-
-  const navigateToProfile = () =>{  
-    navigate("/user-profile/profile")
-  }
-
-  const navigateToBooking = () =>{  
-    navigate("/my-booking")
-  }
 
   useEffect(() => {
     const handleResize = () => {
@@ -90,14 +50,61 @@ const Header = ({
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
     setIsMenuOpen(false);
     setIsUserMenuOpen(false);
   }, [location]);
+
+ 
+  // Fallback avatar component
+  const renderAvatar = (size = 8) => {
+    if (user?.profileImage) {
+      return (
+        <img
+          src={`${import.meta.env.VITE_APP_BASE_URL}/${user?.profileImage}`}
+          alt={user?.name}
+          className={`w-${size} h-${size} rounded-full`}
+          onError={(e) => {
+            e.target.style.display = "none";
+            e.target.nextSibling.style.display = "block";
+          }}
+        />
+      );
+    }
+    return (
+      <div
+        className={`w-${size} h-${size} rounded-full bg-gray-200 flex items-center justify-center`}
+        style={{ display: user?.profileImage ? "none" : "flex" }}
+      >
+        <Icon
+          name="User"
+          size={size === 8 ? 16 : 20}
+          className="text-gray-500"
+        />
+      </div>
+    );
+  };
+
+ 
+
+  const handleLogout = () => {
+    setToken(null);
+    setIsMenuOpen(false);
+    setIsUserMenuOpen(false);
+  };
+  // console.log("userklk",user);
+
+  const navigateToProfile = () => {
+    navigate("/user-profile/profile");
+  };
+
+  const navigateToBooking = () => {
+    navigate("/my-booking");
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -108,41 +115,39 @@ const Header = ({
     setIsUserMenuOpen(!isUserMenuOpen);
     if (isMenuOpen) setIsMenuOpen(false);
   };
-  
+
   // Base nav items that are always visible
-  const baseNavItems = [
-    { name: 'Find Parking', path: '/', icon: 'Search' }
-  ];
+  const baseNavItems = [{ name: "Find Parking", path: "/", icon: "Search" }];
 
   // Nav items that require authentication
   const authNavItems = [
-    { name: 'My Spots', path: '/my-parking-spots', icon: 'ParkingCircle' },
-    { name: 'Add Spot', path: '/add-parking-spot', icon: 'Plus' },
+    { name: "My Spots", path: "/my-parking-spots", icon: "ParkingCircle" },
+    { name: "Add Spot", path: "/add-parking-spot", icon: "Plus" },
   ];
 
   const navItems = token ? [...baseNavItems, ...authNavItems] : baseNavItems;
   // Nav items for guards
   const guardNavItems = [
-    { name: 'Spot Details', path: '/', icon: 'Shield' },
-    { name: 'Spot Bookings', path: '/booking-details', icon: 'Calendar' },
-    { name: 'QR Scanner', path: '/qr-scanner', icon: 'QrCode' },
+    { name: "Spot Details", path: "/", icon: "Shield" },
+    { name: "Spot Bookings", path: "/booking-details", icon: "Calendar" },
+    { name: "QR Scanner", path: "/qr-scanner", icon: "QrCode" },
   ];
 
   const adminNavItems = [
-    { name: 'Users', path: '/users', icon: 'People' },
+    { name: "Users", path: "/users", icon: "People" },
     // { name: 'Parking Spots', path: '/parking-spots', icon: 'ParkingCircle' },
     // { name: 'Bookings', path: '/bookings', icon: 'Calendar' },
     // { name: 'Vehicles', path: '/vehicles', icon: 'DirectionsCar' },
-    { name: 'Guards', path: '/guards', icon: 'Shield' },
+    // { name: 'Guards', path: '/guards', icon: 'Shield' },
   ];
 
   // Determine which nav items to show based on role
   let roleNavItems = [];
-  if (userRole === 'Admin') {
+  if (userRole === "Admin") {
     roleNavItems = adminNavItems;
-  }else if (userRole === 'User') {
+  } else if (userRole === "User") {
     roleNavItems = navItems;
-  } else if (userRole === 'Guard') {
+  } else if (userRole === "Guard") {
     roleNavItems = guardNavItems;
   }
 
@@ -173,7 +178,6 @@ const Header = ({
   } else {
     menuItems = userMenuItems; // Default for normal users
   }
-  
 
   const renderLogo = () => (
     <Link to="/" className="flex items-center">
@@ -189,9 +193,9 @@ const Header = ({
         <Link
           key={item.name}
           to={item.path}
-          className={`flex items-center text-sm font-medium hover:text-primary ${location.pathname === item.path
-              ?  'text-primary' : 'text-gray-700'
-            }`}
+          className={`flex items-center text-sm font-medium hover:text-primary ${
+            location.pathname === item.path ? "text-primary" : "text-gray-700"
+          }`}
         >
           <Icon name={item.icon} size={16} className="mr-1" />
           {item.name}
@@ -201,16 +205,23 @@ const Header = ({
   );
 
   const renderMobileMenu = () => (
-    <div 
-    className={`
+    <div
+      className={`
       fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out
-      ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}
       md:hidden
-    `}>
-      <div className="bg-white h-full w-4/5 max-w-sm shadow-xl flex flex-col"  ref={mobileMenuRef}>
+    `}
+    >
+      <div
+        className="bg-white h-full w-4/5 max-w-sm shadow-xl flex flex-col"
+        ref={mobileMenuRef}
+      >
         <div className="flex items-center justify-between p-4 border-b">
           {renderLogo()}
-          <button onClick={toggleMenu} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={toggleMenu}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <Icon name="X" size={24} />
           </button>
         </div>
@@ -220,8 +231,11 @@ const Header = ({
               <li key={item.name}>
                 <Link
                   to={item.path}
-                  className={`flex items-center py-2 text-base font-medium ${location.pathname === item.path ? 'text-primary' : 'text-gray-700'
-                    }`}
+                  className={`flex items-center py-2 text-base font-medium ${
+                    location.pathname === item.path
+                      ? "text-primary"
+                      : "text-gray-700"
+                  }`}
                   onClick={toggleMenu}
                 >
                   <Icon name={item.icon} size={20} className="mr-3" />
@@ -234,9 +248,9 @@ const Header = ({
         {userLoggedIn && (
           <div className="p-4 border-t">
             <div className="flex items-center gap-5">
-            {renderAvatar(10)}
-              <div>
-                <p className="font-medium text-gray-900">{userName}</p>
+              {renderAvatar(10)}
+              <div onClick={navigateToProfile}>
+                <p className="font-medium text-gray-900">{user?.name}</p>
                 <p className="text-sm text-gray-800">View profile</p>
               </div>
             </div>
@@ -270,7 +284,7 @@ const Header = ({
       >
         {renderAvatar()}
         <span className={`ml-2  text-gray-700 hidden sm:block`}>
-          {userName}
+          {user?.name}
         </span>
         <Icon
           name={isUserMenuOpen ? "ChevronUp" : "ChevronDown"}
@@ -278,18 +292,17 @@ const Header = ({
           className={`ml-1 'text-gray-500'`}
         />
       </button>
-
       {isUserMenuOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
           {menuItems.map((item) => (
-            <button
-              key={item.name}
-              onClick={item.action}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <Icon name={item.icon} size={16} className="mr-2 text-gray-500" />
-              {item.name}
-            </button>
+              <button
+                key={item.name}
+                onClick={item.action}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <Icon name={item.icon} size={16} className="mr-2 text-gray-500" />
+                {item.name}
+              </button>
           ))}
         </div>
       )}
@@ -298,8 +311,7 @@ const Header = ({
 
   return (
     <>
-      {/* <header className={`${baseClasses} ${variantClasses} ${className}`}> */}
-      <header className='w-full z-50 py-4 bg-gray-50 text-gray-900'>
+      <header className="w-full z-50 py-4 bg-gray-50 text-gray-900">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -308,7 +320,7 @@ const Header = ({
                 onClick={toggleMenu}
                 aria-label="Open menu"
               >
-                <Icon name="Menu" size={24} className='text-gray-700' />
+                <Icon name="Menu" size={24} className="text-gray-700" />
               </button>
               {renderLogo()}
             </div>
@@ -323,16 +335,11 @@ const Header = ({
                   <Button
                     variant={"secondary"}
                     size="sm"
-                    // className={isTransparent ? "border-white text-white hover:bg-white hover:bg-opacity-10" : ""}
                     onClick={openSignInModal}
                   >
                     Sign In
                   </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={openSignUpModal}
-                  >
+                  <Button variant="primary" size="sm" onClick={openSignUpModal}>
                     Sign Up
                   </Button>
                 </div>
@@ -343,9 +350,30 @@ const Header = ({
 
         {renderMobileMenu()}
       </header>
-     
+      {authModalOpen && (
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          initialTab={authModalTab}
+        />
+      )}
     </>
   );
 };
 
 export default Header;
+
+// {isUserMenuOpen && (
+//   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+//     {menuItems.map((item) => (
+//       <button
+//         key={item.name}
+//         onClick={item.action}
+//         className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+//       >
+//         <Icon name={item.icon} size={16} className="mr-2 text-gray-500" />
+//         {item.name}
+//       </button>
+//     ))}
+//   </div>
+// )}

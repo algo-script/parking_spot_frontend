@@ -5,9 +5,10 @@ import Input from "../../../components/ui/Input";
 import { updateUserProfile } from "utils/helperFunctions";
 import { toast } from "react-toastify";
 import { Mycontext } from "context/context";
+import { useLocation } from "react-router-dom";
 
 // Profile Tab
-const ProfileTab = ({ user, fetchUserData }) => {
+const ProfileTab = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -19,7 +20,21 @@ const ProfileTab = ({ user, fetchUserData }) => {
   const [imageFile, setImageFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { userRole } = useContext(Mycontext);
+  const { userRole ,user,updateUser} = useContext(Mycontext);
+  // const location = useLocation();
+  // const { user, setUser } = location.state || {};
+
+
+  // const [user, setUser] = useState(location.state?.user || null);
+  // const [fetchUserData, setFetchUserData] = useState(location.state?.fetchUserData || null);
+  // const { user, fetchUserData } = location.state || {};
+  // console.log(location.state);
+  // console.log(user, setUser);
+  
+  // const user =  location.state?.user
+  // const fetchUserData = location.state?.fetchUserData
+  // console.log(user, fetchUserData);
+  
 
   const responseTimeOptions = [
     "Within an hour",
@@ -27,7 +42,15 @@ const ProfileTab = ({ user, fetchUserData }) => {
     "Within a day",
     "Within a few days",
   ];
-
+  // useEffect(() => {
+  //   // Update local state if navigation state changes
+  //   if (location.state?.user) {
+  //     setUser(location.state.user);
+  //   }
+  //   if (location.state?.fetchUserData) {
+  //     setFetchUserData(() => location.state.fetchUserData);
+  //   }
+  // }, [location.state]);
   useEffect(() => {
     setFormData({
       name: user?.name || "",
@@ -133,7 +156,8 @@ const ProfileTab = ({ user, fetchUserData }) => {
 
       const response = await updateUserProfile(formDataToSend);
       if (response.success) {
-        fetchUserData();
+        // fetchUserData();
+        updateUser()
         setImageFile(null);
         setIsEditing(false);
         toast.success(response.message);
@@ -141,6 +165,7 @@ const ProfileTab = ({ user, fetchUserData }) => {
         toast.error(response.message || "Failed to update profile");
       }
     } catch (err) {
+
       const errorMessage =
         err.response?.data?.message || "Failed to update profile";
       toast.error(errorMessage);

@@ -12,6 +12,8 @@ import ErrorMessage from "./components/ErrorMessage";
 import { Mycontext } from "context/context";
 import { findspotById } from "utils/helperFunctions";
 import BookingModal from "./components/BookingModal";
+import { ModelContext } from "context/modelcontext";
+import AuthModal from "pages/AuthModal";
 
 const ParkingSpotDetails = () => {
   const [loading, setLoading] = useState(true);
@@ -20,9 +22,11 @@ const ParkingSpotDetails = () => {
   const [spotAvailable, setSpotAvailable] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const navigate = useNavigate();
-  const { token,openSignUpModal } = useContext(Mycontext);
+  const { token } = useContext(Mycontext);
+  const { authModalOpen,authModalTab,openSignUpModal,setAuthModalOpen} = useContext(ModelContext)
   const { id } = useParams(); 
   const [showBookingModal, setShowBookingModal] = useState(false);
+  
   
 
  
@@ -130,9 +134,6 @@ const ParkingSpotDetails = () => {
                 src={`${import.meta.env.VITE_APP_BASE_URL}/${parkingSpot.images[currentImageIndex]}`}
                 alt={parkingSpot.name}
                 className="w-full h-full object-cover"
-                // onError={(e) => {
-                //   e.target.src = "/assets/images/no_image.png";
-                // }}
               />
               <div className="absolute bottom-4 right-4 flex space-x-2">
                 {parkingSpot.images.map((_, index) => (
@@ -159,10 +160,6 @@ const ParkingSpotDetails = () => {
                       <span className="text-2xl font-bold text-gray-900">${parkingSpot.hourlyRate.toFixed(2)}</span>
                       <span className="text-gray-600 ml-1">/ hour</span>
                     </div>
-                    {/* <div className="mb-2">
-                      <span className="text-2xl font-bold text-gray-900">${parkingSpot.dailyRate.toFixed(2)}</span>
-                      <span className="text-gray-600 ml-1">/ day</span>
-                    </div> */}
                   </div>
                   
                   <p className="text-gray-700 mb-6">{parkingSpot.description}</p>
@@ -256,6 +253,13 @@ const ParkingSpotDetails = () => {
           />
         )}
       </main>
+      {authModalOpen && (
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          initialTab={authModalTab}
+        />
+      )}
     </div>
   );
 };

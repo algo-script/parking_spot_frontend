@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { bookingDetaiils, formatDate, formatTimeString } from 'utils/helperFunctions';
+import { bookingDetaiils, formatDate, formatPrice, formatTimeString } from 'utils/helperFunctions';
 import TabSelector from './Tabselecror';
 
 
 const BookingDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [bookingData, setBookingData] = useState([]);
-  const activeTab = searchParams.get('tab') || 'upcoming';
+  const [activeTab,setActiveTab] = useState(searchParams.get('tab') || 'upcoming');
 
   const fetchBookingData = async () => {
     try {
@@ -27,14 +27,15 @@ const BookingDetails = () => {
   // Update URL when tab changes
   const handleTabChange = (tabId) => {
     setSearchParams({ tab: tabId });
-  };0
+    setActiveTab(tabId)
+  };
 
   // Status colors
   const statusColors = {
-    Reserved: 'bg-yellow-100 text-yellow-800',
-    Active: 'bg-green-100 text-green-800',
-    Completed: 'bg-blue-100 text-blue-800',
-    Cancelled: 'bg-red-100 text-red-800'
+    pending: 'bg-yellow-100 text-yellow-800',
+    confirmed: 'bg-green-100 text-green-800',
+    completed: 'bg-blue-100 text-blue-800',
+    cancelled: 'bg-red-100 text-red-800'
   };
 
   const paymentStatusColors = {
@@ -43,39 +44,26 @@ const BookingDetails = () => {
     Failed: 'bg-red-100 text-red-800'
   };
 
-  // Format date and time
-
-
-  // Format date only
-  // const formatDate = (dateTimeStr) => {
-  //   const options = { 
-  //     weekday: 'short',
-  //     month: 'short', 
-  //     day: 'numeric'
-  //   };
-  //   return new Date(dateTimeStr).toLocaleString('en-US', options);
+  // Action handlers
+  // const handleCheckIn = (bookingId) => {
+  //   alert(`Check in booking: ${bookingId}`);
   // };
 
-  // Action handlers
-  const handleCheckIn = (bookingId) => {
-    alert(`Check in booking: ${bookingId}`);
-  };
+  // const handleCheckOut = (bookingId) => {
+  //   alert(`Check out booking: ${bookingId}`);
+  // };
 
-  const handleCheckOut = (bookingId) => {
-    alert(`Check out booking: ${bookingId}`);
-  };
+  // const handleViewDetails = (bookingId) => {
+  //   alert(`View details for booking: ${bookingId}`);
+  // };
 
-  const handleViewDetails = (bookingId) => {
-    alert(`View details for booking: ${bookingId}`);
-  };
+  // const handleCancel = (bookingId) => {
+  //   alert(`Cancel booking: ${bookingId}`);
+  // };
 
-  const handleCancel = (bookingId) => {
-    alert(`Cancel booking: ${bookingId}`);
-  };
-
-  const handleContact = (bookingId, user) => {
-    alert(`Contact user ${user} about booking: ${bookingId}`);
-  };
+  // const handleContact = (bookingId, user) => {
+  //   alert(`Contact user ${user} about booking: ${bookingId}`);
+  // };
 
   const isEmpty = bookingData.length === 0;
 
@@ -111,7 +99,7 @@ const BookingDetails = () => {
                       Booking ID
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User & Vehicle
+                      User 
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {activeTab === 'upcoming' ? 'Time Slot' : 'Date & Time'}
@@ -120,11 +108,15 @@ const BookingDetails = () => {
                       Status
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
+                     Vehicle
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      Amount
                     </th>
+                    {/* {activeTab === 'upcoming' &&
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>} */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -136,7 +128,8 @@ const BookingDetails = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{booking.user.name}</div>
-                        <div className="text-sm text-gray-500">{booking.vehicle.vehicleNumber}</div>
+                        <div className="text-sm text-gray-500">{booking.user.mobile}</div>
+                        <div className="text-sm text-gray-500">{booking.user.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {activeTab === 'upcoming' ? (
@@ -155,16 +148,20 @@ const BookingDetails = () => {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[booking.status] || 'bg-gray-100 text-gray-800'}`}>
                           {booking.status}
                         </span>
-                        <div className="mt-1">
+                        {/* <div className="mt-1">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${paymentStatusColors[booking.paymentStatus] || 'bg-gray-100 text-gray-800'}`}>
                             {booking.paymentStatus}
                           </span>
-                        </div>
+                        </div> */}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{booking.vehicle.vehicleNumber}</div>
+                        <div className="text-sm text-gray-500">{booking.vehicle.model}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${booking.totalAmount.toFixed(2)}
+                        {formatPrice(booking.totalAmount)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           {activeTab === 'upcoming' ? (
                             <>
@@ -181,7 +178,8 @@ const BookingDetails = () => {
                                 Cancel
                               </button>
                             </>
-                          ) : (
+                          )
+                           : (
                             <>
                               <button
                                 onClick={() => handleViewDetails(booking._id)}
@@ -198,7 +196,7 @@ const BookingDetails = () => {
                             </>
                           )}
                         </div>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>

@@ -3,14 +3,14 @@ import React, { useState, useEffect } from "react";
 import Icon from "../../../components/AppIcon";
 import axios from "axios";
 
-const SearchBar = ({ onSearch, initialValue = "", setUserLocation, userLocation ,setSearchLocation,searchLocation}) => {
+const SearchBar = ({ onSearch, initialValue = "", userLocation ,setSearchLocation,searchLocation}) => {
   const [searchQuery, setSearchQuery] = useState(initialValue);
   // const [isUsingCurrentLocation, setIsUsingCurrentLocation] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Ola Maps API key
-  const OLA_MAPS_API_KEY = "Qb1tCYd0ghxhAyc3s1pB4AouMSrYYR8bf5X34TPE";
+  const OLA_MAPS_API_KEY = import.meta.env.VITE_APP_MAP_APIKEY;
 
 
 
@@ -32,7 +32,8 @@ const SearchBar = ({ onSearch, initialValue = "", setUserLocation, userLocation 
         if (userLocation && userLocation.lat && userLocation.lon) {
           params.location = `${userLocation.lat},${userLocation.lon}`;
           console.log("userLocation in fetchSuggestions", userLocation.lat, userLocation.lon);
-        } else {
+        } 
+        else {
           console.log("Skipping location biasing: userLocation incomplete or null", userLocation);
         }
 
@@ -80,26 +81,6 @@ const SearchBar = ({ onSearch, initialValue = "", setUserLocation, userLocation 
       setSearchLocation({
         lat,lng
       });
-      // Skip API call for recent searches without place_id
-      // if (!suggestion.place_id) {
-      //   onSearch({ query: suggestion.text, lat: null, lng: null });
-      //   setSearchQuery(suggestion.text);
-      //   setShowSuggestions(false);
-      //   return;
-      // }
-
-      // const response = await axios.get(
-      //   `https://api.olamaps.io/places/v1/details?place_id=${suggestion.place_id}&api_key=${OLA_MAPS_API_KEY}`
-      // );
-
-      // const data = response.data;
-      // if (data.status === "ok" && data.result.geometry) {
-      //   const { lat, lng } = data.result.geometry.location;
-      //   setSearchQuery(suggestion.text);
-      //   onSearch({ query: suggestion.text, lat, lng });
-      //   addToRecentSearches(suggestion.text);
-      //   setUserLocation({ lat, lon: lng }); // Update user location for consistency
-      // }
     } catch (error) {
       console.error("Error fetching place details:", error);
     }

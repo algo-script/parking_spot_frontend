@@ -24,26 +24,8 @@ const BookingModal = ({ parkingSpot, onClose }) => {
   const [availabilityData, setAvailabilityData] = useState(null);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
   const [bookingData, setBookingData] = useState(null);
-  console.log(selectedStartTime);
 
-  // const generateTimeSlots = () => {
-  //   if (!availabilityData) return [];
 
-  //   const allSlots = [];
-  //   availabilityData.forEach((range) => {
-  //     const start = moment(range.start, "HH:mm");
-  //     const end = moment(range.end, "HH:mm");
-
-  //     let currentTime = start.clone();
-
-  //     while (currentTime.isSameOrBefore(end)) {
-  //       allSlots.push(currentTime.format("H:mm A"));
-  //       currentTime.add(30, "minutes");
-  //     }
-  //   });
-
-  //   return [...new Set(allSlots)]; // Remove duplicates
-  // };
   const generateTimeSlots = () => {
     if (!availabilityData) return [];
     const allSlots = [];
@@ -400,10 +382,10 @@ const BookingModal = ({ parkingSpot, onClose }) => {
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-lg font-medium">Your Vehicle</h3>
-                  <button className="text-primary text-sm flex items-center">
+                  {/* <button className="text-primary text-sm flex items-center">
                     <Icon name="Plus" size={16} className="mr-1" />
                     Add Vehicle
-                  </button>
+                  </button> */}
                 </div>
                 <div className="space-y-3">
                   {availableVehicles.map((vehicle) => (
@@ -448,7 +430,7 @@ const BookingModal = ({ parkingSpot, onClose }) => {
                     <span>{formatPrice(calculateTotal())}</span>
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    {calculateDuration()} @{" "}
+                    {calculateDuration()} {" "}
                     {formatPrice(parkingSpot.hourlyRate)}/hour
                   </div>
                 </div>

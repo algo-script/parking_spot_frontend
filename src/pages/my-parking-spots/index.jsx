@@ -18,9 +18,7 @@ import GaurdDetail from "./components/GaurdDetail";
 const MyParkingSpots = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [userType, setUserType] = useState(
-    location.pathname === "/my-parking-spots" ? "owner" : "renter"
-  );
+  const [userType, setUserType] = useState(location.pathname === "/my-parking-spots" ? "owner" : "renter");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -241,7 +239,7 @@ const MyParkingSpots = () => {
             <ParkingSpotCard
               key={spot._id}
               spot={spot}
-              userType="owner"
+              userType={userType}
               onToggleAvailability={handleToggleAvailability}
               onUpdateTimeWindow={handleUpdateTimeWindow}
               onAddGaurdDetails={hadleshowGaurdpopup}
@@ -250,7 +248,7 @@ const MyParkingSpots = () => {
           ))}
         </div>
       ) : (
-        <EmptyState userType="owner" onAddParkingSpot={handleAddParkingSpot} />
+        <EmptyState  userType={userType} onAddParkingSpot={handleAddParkingSpot} />
       );
     }
 
@@ -260,13 +258,13 @@ const MyParkingSpots = () => {
           <ParkingSpotCard
             key={booking._id}
             booking={booking}
-            userType="renter"
+            userType={userType}
             onCancelBooking={handleCancelBooking}
           />
         ))}
       </div>
     ) : (
-      <EmptyState userType="renter" onFindParking={handleFindParking} />
+      <EmptyState  userType={userType} onFindParking={handleFindParking} />
     );
   };
 
@@ -275,7 +273,7 @@ const MyParkingSpots = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">My Parking Spots</h1>
-          <button
+          {/* <button
             onClick={handleRefresh}
             className="flex items-center text-primary hover:text-primary-dark"
             disabled={isRefreshing || isLoading}
@@ -286,7 +284,7 @@ const MyParkingSpots = () => {
               className={`mr-1 ${isRefreshing ? "animate-spin" : ""}`}
             />
             {isRefreshing ? "Refreshing..." : "Refresh"}
-          </button>
+          </button> */}
         </div>
 
         <TabSelector activeTab={userType} onTabChange={handleTabChange} />
@@ -312,6 +310,7 @@ const MyParkingSpots = () => {
           </div>
         )}
       </div>
+      
       {showGuardPopup && (
          <GaurdDetail
          onClose={handleCloseGaurdPopup}

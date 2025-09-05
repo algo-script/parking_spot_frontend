@@ -27,7 +27,6 @@ const SideBar = ({
   }, []);
 
   useEffect(() => {
-    // Close mobile drawer when location changes
     setIsMobileOpen(false);
   }, [location]);
 
@@ -83,9 +82,6 @@ const SideBar = ({
             src={userAvatar}
             alt={userName}
             className="w-8 h-8 rounded-full"
-            // onError={(e) => {
-            //   e.target.src = "/assets/images/no_image.png"
-            // }}
           />
           {!isCollapsed && (
             <div className="ml-3">

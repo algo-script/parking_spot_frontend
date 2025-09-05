@@ -12,41 +12,17 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Header from "components/ui/Header";
 import UserProfile from "pages/UserProfile";
-import { getUserProfile } from "utils/helperFunctions";
 import ProtectedRoute from "utils/ProtectedRoute";
-import AuthModal from "pages/AuthModal";
 import GaurdDashboard from "pages/guard-dashboard/GuardDashboard";
 import Qrscan from "pages/guard-dashboard/Qrscan";
 import Bookingdetails from "pages/guard-dashboard/Bookingdetails";
 import Icon from "../src/components/AppIcon";
 import Admindashboard from "pages/admin-dashboard/Admindashboard";
 import UserData from "pages/admin-dashboard/Userdata";
+import { ModelProvider } from "context/modelcontext";
 
 const Routes = () => {
-  const { token, authModalOpen, setAuthModalOpen, authModalTab, userRole } =
-    useContext(Mycontext);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (token) {
-      fetchUserData();
-    }
-    setLoading(false);
-  }, [token]);
-
-  const fetchUserData = async () => {
-    try {
-      const response = await getUserProfile();
-      const userData = response.data;
-      setUser(userData);
-    } catch (err) {
-      setError("Failed to load profile data");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { token, userRole } = useContext(Mycontext);
 
   // Component to render based on role for home route
   const HomeRouteRenderer = () => {
@@ -65,26 +41,24 @@ const Routes = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        {/* <CgSpinner size={40} className="animate-spin" /> */}
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen">
+  //       <CgSpinner size={40} className="animate-spin" />
+  //     </div>
+  //   );
+  // }
   // If no token, show only the AuthModal as the login screen
 
   return (
     <BrowserRouter>
-      <ErrorBoundary>
+      {/* <ErrorBoundary> */}
       <div className="flex flex-col min-h-screen">
         {/* Fixed Header */}
         <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm">
-          <Header
-            userLoggedIn={token}
-            userName={user?.name}
-            userAvatar={user?.profileImage}
-          />
+          <ModelProvider>
+            <Header userLoggedIn={token} />
+          </ModelProvider>
         </header>
         <main className="flex-grow pt-16">
           <ToastContainer
@@ -98,20 +72,19 @@ const Routes = () => {
             draggable
             pauseOnHover
           />
-        
+
           <ScrollToTop />
-          {authModalOpen && (
-            <AuthModal
-              isOpen={authModalOpen}
-              onClose={() => setAuthModalOpen(false)}
-              initialTab={authModalTab}
-            />
-          )}
+
           <RouterRoutes>
             <Route path="/" element={<HomeRouteRenderer />} />
+
             <Route
               path="/parking-spot-details/:id"
-              element={<ParkingSpotDetails />}
+              element={
+                <ModelProvider>
+                  <ParkingSpotDetails />
+                </ModelProvider>
+              }
             />
 
             <Route
@@ -142,8 +115,8 @@ const Routes = () => {
             <Route
               path="/user-profile/*"
               element={
-                <ProtectedRoute allowedRoles={["User", "Guard","Admin"]}>
-                  <UserProfile user={user} fetchUserData={fetchUserData} />
+                <ProtectedRoute allowedRoles={["User", "Guard", "Admin"]}>
+                  <UserProfile />
                 </ProtectedRoute>
               }
             />
@@ -170,19 +143,19 @@ const Routes = () => {
               path="/users"
               element={
                 <ProtectedRoute allowedRoles={["Admin"]}>
-               <UserData/>
+                  <UserData />
                 </ProtectedRoute>
               }
             />
-             <Route
+            <Route
               path="/parking-spots"
               element={
                 <ProtectedRoute allowedRoles={["Admin"]}>
-                 <NotFound />
+                  <NotFound />
                 </ProtectedRoute>
               }
             />
-             <Route
+            <Route
               path="/bookings"
               element={
                 <ProtectedRoute allowedRoles={["Admin"]}>
@@ -190,15 +163,15 @@ const Routes = () => {
                 </ProtectedRoute>
               }
             />
-             <Route
+            <Route
               path="/vehicles"
               element={
                 <ProtectedRoute allowedRoles={["Admin"]}>
-                 <NotFound />
+                  <NotFound />
                 </ProtectedRoute>
               }
             />
-             <Route
+            <Route
               path="/guards"
               element={
                 <ProtectedRoute allowedRoles={["Admin"]}>
@@ -234,7 +207,7 @@ const Routes = () => {
           </div>
         </footer>
       </div>
-      </ErrorBoundary>
+      {/* </ErrorBoundary> */}
     </BrowserRouter>
   );
 };

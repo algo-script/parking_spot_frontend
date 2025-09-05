@@ -99,7 +99,7 @@ const Pagination = ({
           </p>
           
           {/* Items per page selector */}
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <label htmlFor="itemsPerPage" className="text-sm text-gray-700 mr-2">
               Rows per page:
             </label>
@@ -107,7 +107,7 @@ const Pagination = ({
               id="itemsPerPage"
               value={itemsPerPage}
               onChange={onItemsPerPageChange}
-              className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline- none focus:ring-2 focus:ring-blue-500"
             >
               {itemsPerPageOptions.map(option => (
                 <option key={option} value={option}>
@@ -115,7 +115,7 @@ const Pagination = ({
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
         </div>
         
         <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">

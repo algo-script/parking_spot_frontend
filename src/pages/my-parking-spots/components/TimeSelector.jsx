@@ -6,30 +6,6 @@ const TimeSelector = ({ startTime, endTime, onTimeChange }) => {
   const [start, setStart] = useState(startTime);
   const [end, setEnd] = useState(endTime);
   
-  
-  // Generate time options in 30-minute increments
-  // const generateTimeOptions = () => {
-  //   const options = [];
-  //   for (let hour = 0; hour < 24; hour++) {
-  //     for (let minute of [0, 30]) {
-  //       const formattedHour = hour.toString().padStart(2, '0');
-  //       const formattedMinute = minute.toString().padStart(2, '0');
-  //       const value = `${formattedHour}:${formattedMinute}`;
-        
-  //       const date = new Date();
-  //       date.setHours(hour);
-  //       date.setMinutes(minute);
-  //       const label = date.toLocaleTimeString('en-US', {
-  //         hour: 'numeric',
-  //         minute: '2-digit',
-  //         hour12: true
-  //       });
-        
-  //       options.push({ value, label });
-  //     }
-  //   }
-  //   return options;
-  // };
   const generateTimeOptions = () => {
     const options = [];
     for (let hour = 0; hour < 24; hour++) {

@@ -11,15 +11,15 @@ const FilterControls = ({ filters, onFilterChange }) => {
     selectedDate: filters.selectedDate || ""
   });
   const [timeError, setTimeError] = useState("");
-   // Convert stored date (yyyy-mm-dd) back to dd/mm/yyyy for display
-   useEffect(() => {
-    if (filters.selectedDate) {
-      setLocalFilters(prev => ({
-        ...prev,
-        selectedDate: filters.selectedDate.split('-').reverse().join('/')
-      }));
-    }
-  }, [filters.selectedDate]);
+  
+  //  useEffect(() => {
+  //   if (filters.selectedDate) {
+  //     setLocalFilters(prev => ({
+  //       ...prev,
+  //       selectedDate: filters.selectedDate
+  //     }));
+  //   }
+  // }, [filters.selectedDate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -58,13 +58,7 @@ const FilterControls = ({ filters, onFilterChange }) => {
 
   const handleApplyFilters = () => {
     if (!validateTimes()) return;
-
-    const filtersToApply = {
-      ...localFilters,
-      selectedDate: localFilters.selectedDate.split('/').reverse().join('-')
-    };
-    onFilterChange(filtersToApply);
-    setIsExpanded(false);
+    onFilterChange(localFilters);
   };
 
   const handleResetFilters = () => {
@@ -77,21 +71,6 @@ const FilterControls = ({ filters, onFilterChange }) => {
     setLocalFilters(resetFilters);
     onFilterChange(resetFilters);
     setTimeError("");
-  };
-
-
-  const formatTimeForDisplay = (timeString) => {
-    if (!timeString) return "";
-    
-    try {
-      const [hours, minutes] = timeString.split(":");
-      const hour = parseInt(hours, 10);
-      const period = hour >= 12 ? "PM" : "AM";
-      const displayHour = hour % 12 || 12;
-      return `${displayHour}:${minutes} ${period}`;
-    } catch (e) {
-      return timeString;
-    }
   };
 
   // Check if any filters are active
@@ -116,18 +95,6 @@ const FilterControls = ({ filters, onFilterChange }) => {
         </div>
         
         <div className="flex items-center">
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="text-sm text-gray-600 hover:text-gray-900 mr-3"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleResetFilters();
-              }}
-            >
-              Reset
-            </button>
-          )}
           <Icon 
             name={isExpanded ? "ChevronUp" : "ChevronDown"} 
             size={18} 
@@ -149,7 +116,7 @@ const FilterControls = ({ filters, onFilterChange }) => {
                 name="selectedDate"
                 value={localFilters.selectedDate.split('/').reverse().join('-')} // Convert back to yyyy-mm-dd for input
                 onChange={handleDateChange}
-                min={moment().format("YYYY-MM-DD")} 
+                min={moment().format("YYYY-MM-DD")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
@@ -213,6 +180,7 @@ const FilterControls = ({ filters, onFilterChange }) => {
               type="button"
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200 mr-2"
               onClick={() => {
+                handleResetFilters()
                 setIsExpanded(false);
                 setTimeError("");
               }}
@@ -227,31 +195,6 @@ const FilterControls = ({ filters, onFilterChange }) => {
               Apply Filters
             </button>
           </div>
-        </div>
-      )}
-      
-      {!isExpanded && hasActiveFilters && (
-        <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 flex flex-wrap gap-2">
-          {filters.selectedDate && (
-            <div className="inline-flex items-center bg-purple-50 text-purple-700 text-sm px-2 py-1 rounded-md">
-              <Icon name="Calendar" size={14} className="mr-1" />
-              <span>{filters.selectedDate.split('-').reverse().join('/')}</span>
-            </div>
-          )}
-          
-          {filters.startTime && filters.endTime && (
-            <div className="inline-flex items-center bg-blue-50 text-blue-700 text-sm px-2 py-1 rounded-md">
-              <Icon name="Clock" size={14} className="mr-1" />
-              <span>{formatTimeForDisplay(filters.startTime)} - {formatTimeForDisplay(filters.endTime)}</span>
-            </div>
-          )}
-          
-          {filters.maxPrice !== 50 && (
-            <div className="inline-flex items-center bg-green-50 text-green-700 text-sm px-2 py-1 rounded-md">
-              <Icon name="DollarSign" size={14} className="mr-1" />
-              <span>Max ${filters.maxPrice}/hr</span>
-            </div>
-          )}
         </div>
       )}
     </div>

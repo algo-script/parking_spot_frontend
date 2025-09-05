@@ -24,8 +24,8 @@ const UserProfile = ({ user, fetchUserData }) => {
       case "profile":
         return (
           <ProfileTab
-            user={user}
-            fetchUserData={fetchUserData}
+            // user={user}
+            // fetchUserData={fetchUserData}
           />
         );
       case "password":
@@ -66,7 +66,7 @@ const UserProfile = ({ user, fetchUserData }) => {
       <div className="container mx-auto px-4 py-6">
        <div className="flex flex-col sm:flex-row gap-6 max-w-6xl mx-auto">
       <div className="w-full bg-white sm:w-64 rounded-lg shadow-sm border border-gray-200 p-2 md:p-4 h-fit ">
-        <div className="flex flex-row sm:flex-col justify-between space-y-1 overflow-x-auto sm:overflow-visible">
+        <div className="flex flex-row sm:flex-col gap-3 space-y-1 overflow-x-auto sm:overflow-visible">
           {allowedNavItems.map((item) => (
             <Link
               key={item.path}

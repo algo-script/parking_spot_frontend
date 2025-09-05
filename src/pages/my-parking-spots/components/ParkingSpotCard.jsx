@@ -4,7 +4,11 @@ import Image from "../../../components/AppImage";
 import StatusToggle from "./StatusToggle";
 import TimeSelector from "./TimeSelector";
 import moment from "moment";
-import { formatPrice, formatTimeString } from "utils/helperFunctions";
+import {
+  formatDate,
+  formatPrice,
+  formatTimeString,
+} from "utils/helperFunctions";
 import Locationmap from "./Locationmap";
 import { useNavigate } from "react-router-dom";
 
@@ -16,13 +20,11 @@ const ParkingSpotCard = ({
   onUpdateTimeWindow,
   onCancelBooking,
   onAddGaurdDetails,
-  onEditGuard
+  onEditGuard,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const navigate = useNavigate();
-
-  console.log(spot);
 
   const formatDays = (days) => {
     const activeDays = Object.entries(days)
@@ -144,70 +146,69 @@ const ParkingSpotCard = ({
               </div>
             </div>
             <div>
-             
               {spot.guards && spot.guards.length > 0 && (
                 <>
-                 <h4 className="text-sm font-medium text-gray-700 mb-2">
-                 Guard Details
-               </h4>
-                <div className="flex flex-wrap gap-3">
-                  {spot.guards.map((guard) => (
-                    <div
-                      key={guard._id}
-                      className="bg-gray-50 p-3 rounded-md flex-1 min-w-[200px] relative"
-                    >
-                      <button
-                        onClick={() => onEditGuard(guard)} // Add your edit handler function
-                        className="absolute top-2 right-2 p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-                        aria-label="Edit guard details"
-                        title="Edit guard details"
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    Guard Details
+                  </h4>
+                  <div className="flex flex-wrap gap-3">
+                    {spot.guards.map((guard) => (
+                      <div
+                        key={guard._id}
+                        className="bg-gray-50 p-3 rounded-md flex-1 min-w-[200px] relative"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
+                        <button
+                          onClick={() => onEditGuard(guard)} // Add your edit handler function
+                          className="absolute top-2 right-2 p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                          aria-label="Edit guard details"
+                          title="Edit guard details"
                         >
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      {/* Name and Mobile side by side */}
-                      <div className="flex flex-wrap items-center gap-5 mb-2">
-                        <div className="flex items-center">
-                          <Icon
-                            name="User"
-                            size={16}
-                            className="text-gray-500 mr-2"
-                          />
-                          <span className="text-sm font-medium text-gray-800">
-                            {guard.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <Icon
-                            name="Phone"
-                            size={16}
-                            className="text-gray-500 mr-2"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {guard.mobile}
-                          </span>
-                        </div>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        {/* Name and Mobile side by side */}
+                        <div className="flex flex-wrap items-center gap-5 mb-2">
+                          <div className="flex items-center">
+                            <Icon
+                              name="User"
+                              size={16}
+                              className="text-gray-500 mr-2"
+                            />
+                            <span className="text-sm font-medium text-gray-800">
+                              {guard.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center">
+                            <Icon
+                              name="Phone"
+                              size={16}
+                              className="text-gray-500 mr-2"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {guard.mobile}
+                            </span>
+                          </div>
 
-                        <div className="flex items-center">
-                          <Icon
-                            name="Mail"
-                            size={16}
-                            className="text-gray-500 mr-2"
-                          />
-                          <span className="text-sm text-gray-700 break-words">
-                            {guard.email}
-                          </span>
+                          <div className="flex items-center">
+                            <Icon
+                              name="Mail"
+                              size={16}
+                              className="text-gray-500 mr-2"
+                            />
+                            <span className="text-sm text-gray-700 break-words">
+                              {guard.email}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -290,7 +291,7 @@ const ParkingSpotCard = ({
                             {booking.user?.name}
                           </p>
                           <p className="text-xs text-gray-800">
-                            {moment(booking.date).format("MMM D, YYYY")}
+                            {formatDate(booking.date)}
                           </p>
                           <p className="text-xs text-gray-600">
                             {formatTimeString(booking.startTime)} -{" "}
@@ -346,13 +347,18 @@ const ParkingSpotCard = ({
 
   const renderRenterView = () => {
     const isUpcoming = booking.status === "pending";
+    // Function to handle QR code download
+    const downloadQRCode = () => {
+      // Create an anchor element
+      const link = document.createElement("a");
+      link.href = booking.qrCode;
+      link.download = `QRCode-${booking.address.replace(/\s+/g, "-")}.png`;
 
-    // Format date and time information
-    const bookingDate = moment(booking.date).format("MMM D, YYYY");
-    const bookingDay = moment(booking.date).format("dddd");
-    const startTime = moment(booking.startTime, "HH:mm").format("h:mm A");
-    const endTime = moment(booking.endTime, "HH:mm").format("h:mm A");
-    const duration = booking.duration; // "00:30" format
+      // Trigger the download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
 
     return (
       <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-200">
@@ -419,14 +425,15 @@ const ParkingSpotCard = ({
                     className="text-gray-500 mr-1"
                   />
                   <span className="text-sm text-gray-700">
-                    {bookingDay}, {bookingDate}
+                    {formatDate(booking.date)}
                   </span>
                 </div>
 
                 <div className="flex items-center mb-1">
                   <Icon name="Clock" size={16} className="text-gray-500 mr-1" />
                   <span className="text-sm text-gray-700">
-                    {startTime} - {endTime} ({duration})
+                    {formatTimeString(booking.startTime)} -{" "}
+                    {formatTimeString(booking.endTime)}({booking.duration})
                   </span>
                 </div>
 
@@ -442,7 +449,7 @@ const ParkingSpotCard = ({
                 <div className="flex items-center mt-3">
                   <div className="text-sm text-gray-500">Total Amount:</div>
                   <div className="text-primary font-semibold ml-2">
-                    ₹{booking.totalAmount.toFixed(2)}
+                    {formatPrice(booking.totalAmount)}
                   </div>
                 </div>
               </div>
@@ -457,6 +464,14 @@ const ParkingSpotCard = ({
                   alt="Booking QR Code"
                   className="w-24 h-24 md:w-32 md:h-32 object-contain"
                 />
+                {/* Download QR Code Button */}
+                <button
+                  onClick={downloadQRCode}
+                  className="mt-2 flex items-center justify-center px-3 py-1 bg-primary text-white text-xs rounded-md hover:bg-primary-dark transition-colors"
+                >
+                  <Icon name="Download" size={14} className="mr-1" />
+                  Download QR Code
+                </button>
                 <p className="text-xs text-gray-500 mt-2 text-center md:text-right">
                   Show this QR code at the parking location
                 </p>

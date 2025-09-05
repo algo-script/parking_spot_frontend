@@ -160,7 +160,12 @@ export const formatTimeString = (timeStr) => {
 };
 
 export const formatDate = (dateTimeStr) => {
-  return moment(dateTimeStr).format("ddd, MMM D");
+  return moment(dateTimeStr).format("ddd, MMM D, YYYY");
+};
+
+export const formatDateTime = (dateTimeStr) => {
+  if (!dateTimeStr) return "N/A";
+  return moment(dateTimeStr).format("DD/MM/YYYY hh:mm A");
 };
 
 export const formatPrice = (price) => {
